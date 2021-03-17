@@ -18,7 +18,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	privateKey, err := crypto.HexToECDSA("bb794ec88d7cb0547b4044a01683e765372f605319dc1d2c25c6f905b0044c3c")
+	privateKey, err := crypto.HexToECDSA("ed94c4cc8cf64ca5c85c838a64bd0ae018299d370bacc2fc204ceee78ff75abe")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -35,6 +35,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	fmt.Printf("Nonce: %v\n", nonce)
 
 	gasPrice, err := conn.SuggestGasPrice(context.Background())
 	if err != nil {

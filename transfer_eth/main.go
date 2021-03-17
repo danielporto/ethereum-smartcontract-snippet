@@ -21,7 +21,7 @@ func main() {
 	}
 
 	// #1 get an account pkey (ganache)
-	privateKey, err := crypto.HexToECDSA("bb794ec88d7cb0547b4044a01683e765372f605319dc1d2c25c6f905b0044c3c")
+	privateKey, err := crypto.HexToECDSA("ed94c4cc8cf64ca5c85c838a64bd0ae018299d370bacc2fc204ceee78ff75abe")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -47,7 +47,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	toAddress := common.HexToAddress("0xFE293E3Eb66852EB1c3bfd9F6AD4469d463b601e")
+	toAddress := common.HexToAddress("0x01345b5946fc518644355EF6dCB4a61BF6EF7955")
 	var data []byte //all transactions require data even when is empty
 	// now creates a transaction
 	tx := types.NewTransaction(nonce, toAddress, value, gasLimit, gasPrice, data)
