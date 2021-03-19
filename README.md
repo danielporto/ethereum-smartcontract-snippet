@@ -5,8 +5,8 @@
 * abigen tool (go-ethereum devtools)
 * nodejs
 * protoc (protobuf dev libs)
-* golang 
-
+* golang (1.14 and 1.16 worked)
+* ganache (test network)
 ```
 brew install solidity
 ```

@@ -15,7 +15,7 @@ limitations under the License.
 */
 package main
 
-import "github.com/danielporto/smartcontracts/counter/cmd"
+import "github.com/danielporto/ethereum-smartcontract-snippet/counter/cmd"
 
 func main() {
 	cmd.Execute()
