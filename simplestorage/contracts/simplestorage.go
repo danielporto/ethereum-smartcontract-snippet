@@ -27,26 +27,27 @@ var (
 )
 
 // SimpleStorageABI is the input ABI used to generate the binding from.
-const SimpleStorageABI = "[{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"x\",\"type\":\"uint256\"}],\"name\":\"add\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"get\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"retVal\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"x\",\"type\":\"uint256\"}],\"name\":\"set\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+const SimpleStorageABI = "[{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_storedData\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"x\",\"type\":\"uint256\"}],\"name\":\"add\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"get\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"retVal\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"x\",\"type\":\"uint256\"}],\"name\":\"set\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"storedData\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
 
 // SimpleStorageFuncSigs maps the 4-byte function signature to its string representation.
 var SimpleStorageFuncSigs = map[string]string{
 	"1003e2d2": "add(uint256)",
 	"6d4ce63c": "get()",
 	"60fe47b1": "set(uint256)",
+	"2a1afcd9": "storedData()",
 }
 
 // SimpleStorageBin is the compiled bytecode used for deploying new contracts.
-var SimpleStorageBin = "0x608060405234801561001057600080fd5b5060f98061001f6000396000f3fe6080604052348015600f57600080fd5b5060043610603c5760003560e01c80631003e2d214604157806360fe47b11460525780636d4ce63c146062575b600080fd5b6050604c3660046089565b6077565b005b6050605d3660046089565b600055565b60005460405190815260200160405180910390f35b806000546083919060a0565b60005550565b6000602082840312156099578081fd5b5035919050565b6000821982111560be57634e487b7160e01b81526011600452602481fd5b50019056fea2646970667358221220d5b63799945359157b72d1e7d00dc9cdc0e774168a17edefdf506659861025c964736f6c63430008020033"
+var SimpleStorageBin = "0x608060405234801561001057600080fd5b5060405161016d38038061016d83398101604081905261002f91610037565b60005561004f565b600060208284031215610048578081fd5b5051919050565b61010f8061005e6000396000f3fe6080604052348015600f57600080fd5b506004361060465760003560e01c80631003e2d214604b5780632a1afcd914605c57806360fe47b11460765780636d4ce63c146086575b600080fd5b605a6056366004609f565b608d565b005b606460005481565b60405190815260200160405180910390f35b605a6081366004609f565b600055565b6000546064565b806000546099919060b6565b60005550565b60006020828403121560af578081fd5b5035919050565b6000821982111560d457634e487b7160e01b81526011600452602481fd5b50019056fea26469706673582212208c2496b1b0d88b323657945a5f342d65b80966f7daba420f9346daa337cd9cfe64736f6c63430008020033"
 
 // DeploySimpleStorage deploys a new Ethereum contract, binding an instance of SimpleStorage to it.
-func DeploySimpleStorage(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *SimpleStorage, error) {
+func DeploySimpleStorage(auth *bind.TransactOpts, backend bind.ContractBackend, _storedData *big.Int) (common.Address, *types.Transaction, *SimpleStorage, error) {
 	parsed, err := abi.JSON(strings.NewReader(SimpleStorageABI))
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
 
-	address, tx, contract, err := bind.DeployContract(auth, parsed, common.FromHex(SimpleStorageBin), backend)
+	address, tx, contract, err := bind.DeployContract(auth, parsed, common.FromHex(SimpleStorageBin), backend, _storedData)
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
@@ -224,6 +225,37 @@ func (_SimpleStorage *SimpleStorageSession) Get() (*big.Int, error) {
 // Solidity: function get() view returns(uint256 retVal)
 func (_SimpleStorage *SimpleStorageCallerSession) Get() (*big.Int, error) {
 	return _SimpleStorage.Contract.Get(&_SimpleStorage.CallOpts)
+}
+
+// StoredData is a free data retrieval call binding the contract method 0x2a1afcd9.
+//
+// Solidity: function storedData() view returns(uint256)
+func (_SimpleStorage *SimpleStorageCaller) StoredData(opts *bind.CallOpts) (*big.Int, error) {
+	var out []interface{}
+	err := _SimpleStorage.contract.Call(opts, &out, "storedData")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// StoredData is a free data retrieval call binding the contract method 0x2a1afcd9.
+//
+// Solidity: function storedData() view returns(uint256)
+func (_SimpleStorage *SimpleStorageSession) StoredData() (*big.Int, error) {
+	return _SimpleStorage.Contract.StoredData(&_SimpleStorage.CallOpts)
+}
+
+// StoredData is a free data retrieval call binding the contract method 0x2a1afcd9.
+//
+// Solidity: function storedData() view returns(uint256)
+func (_SimpleStorage *SimpleStorageCallerSession) StoredData() (*big.Int, error) {
+	return _SimpleStorage.Contract.StoredData(&_SimpleStorage.CallOpts)
 }
 
 // Add is a paid mutator transaction binding the contract method 0x1003e2d2.

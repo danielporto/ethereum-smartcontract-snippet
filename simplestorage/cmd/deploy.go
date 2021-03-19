@@ -19,9 +19,10 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"fmt"
-	"github.com/danielporto/ethereum-smartcontract-snippet/simplestorage/contracts"
 	"log"
 	"math/big"
+
+	"github.com/danielporto/ethereum-smartcontract-snippet/simplestorage/contracts"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -38,6 +39,7 @@ var deployCmd = &cobra.Command{
 	This will require a private key. `,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("deploy called")
+		deploySimpleStorage()
 
 	},
 }
@@ -57,14 +59,15 @@ func init() {
 }
 
 func deploySimpleStorage() {
+	log.Println("Connecting to ethereum network...")
 	conn, err := ethclient.Dial("http://localhost:7545")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Failed to connect to ethereum node", err)
 	}
 
-	privateKey, err := crypto.HexToECDSA("ed94c4cc8cf64ca5c85c838a64bd0ae018299d370bacc2fc204ceee78ff75abe")
+	privateKey, err := crypto.HexToECDSA("5be3609f06807dd9c13497acada122f9a660c3ba4abb4d14920fc08b3c39971c")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Error converting the private key from Hex to ECDSA", err)
 	}
 
 	publicKey := privateKey.Public()
@@ -77,13 +80,13 @@ func deploySimpleStorage() {
 	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
 	nonce, err := conn.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Error while getting a new nonce", err)
 	}
 	fmt.Printf("Nonce: %v\n", nonce)
 
 	gasPrice, err := conn.SuggestGasPrice(context.Background())
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Error while trying to get the gas price", err)
 	}
 
 	auth := bind.NewKeyedTransactor(privateKey)
@@ -92,9 +95,9 @@ func deploySimpleStorage() {
 	auth.GasLimit = uint64(300000)
 	auth.GasPrice = gasPrice
 
-	address, tx, instance, err := contracts.DeploySimpleStorage(auth, conn)
+	address, tx, instance, err := contracts.DeploySimpleStorage(auth, conn, big.NewInt(0))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Error deploying simple storage", err)
 	}
 
 	fmt.Println(address.Hex())
