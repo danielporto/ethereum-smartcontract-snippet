@@ -16,40 +16,39 @@ limitations under the License.
 package cmd
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"fmt"
-	"context"
+
+	log "github.com/sirupsen/logrus"
+	"math/big"
 
 	"github.com/danielporto/ethereum-smartcontract-snippet/counter/contracts"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"log"
-	"math/big"
 
 	"github.com/spf13/cobra"
 )
 
+
+
 // incrementCmd represents the increment command
 var incrementCmd = &cobra.Command{
 	Use:   "increment",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Increments a counter in a smartcontract",
+	Long: `Connects to a smartcontract in a quorum network and increments a counter`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("increment called")
-		executeIncrement()
+		Increment(key, host, port)
 
 	},
 }
 
 func init() {
-	runCmd.AddCommand(incrementCmd)
+	rootCmd.AddCommand(incrementCmd)
 
 	// Here you will define your flags and configuration settings.
 
@@ -60,12 +59,16 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// incrementCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	incrementCmd.PersistentFlags().IntVarP(&amount, "amount", "a", 1, "Amount to add to a counter." )
+	incrementCmd.PersistentFlags().StringVarP(&contract, "contract", "c", "", "Contract address on the blockchain." )
+	incrementCmd.MarkFlagRequired("contract")
 }
 
-func executeIncrement() {
+func Increment(key, host, port string) *types.Transaction {
 
 	// 1. Initialize a connection
-	client, err := ethclient.Dial("http://localhost:7545")
+	url := "http://" + host +":"+port
+	client, err := ethclient.Dial(url)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -74,7 +77,7 @@ func executeIncrement() {
 	// get credentials to write
 	// from ganache the private key is in the key icon of any account/wallet
 	// ECDSA (elyptic curve DSA is the standard used by ethereum)
-	privateKey, err := crypto.HexToECDSA("5175aa0656506256dddd9694bb5b14bc7b0fddf07f4aade4652291829dbad40f")
+	privateKey, err := crypto.HexToECDSA(key)
 	if err != nil {
 		log.Fatal("Error converting the private key", err)
 	}
@@ -84,22 +87,21 @@ func executeIncrement() {
 	if !ok {
 		log.Fatal("Cannot assert type: public key is not the type *ecdsa.PublicKey")
 	}
-	// now get the account of that private key
+	//now get the account of that private key
 	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
 
-	// 3. configure nonce (prevent replay attacks with a user specific nonce)
+	//3. configure nonce (prevent replay attacks with a user specific nonce)
 	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
 		log.Fatal("Impossible to get a nonce for acccount", err)
 	}
-	// 4. configure gasPrice
+	//4. configure gasPrice
 	gasPrice, err := client.SuggestGasPrice(context.Background())
 	if err != nil {
 		log.Fatal("Unable to get a gas price", err)
 	}
 
 	// 4. setup an authenticated transactor with info from credentials and connection configuration
-
 	auth := bind.NewKeyedTransactor(privateKey)
 	auth.Nonce = big.NewInt(int64(nonce))
 	auth.Value = big.NewInt(0) // not transfering funds, just executing contract operation
@@ -108,15 +110,21 @@ func executeIncrement() {
 
 	// 5. load a smartcontract
 	// use the transaction id of the contract deployed to return a reference to the contract
-	address := common.HexToAddress("0x50235A46F1401070613dA7154f1154b39A6c8686")
+	address := common.HexToAddress(contract)
 	instance, err := contracts.NewCounter(address, client)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	tx, err := instance.Increment(auth)
+	tx, err := instance.Increment(auth, big.NewInt(int64(amount)))
 	if err != nil {
 		log.Fatal("Failed to call transaction method", err)
 	}
-	fmt.Printf("tx sent: %s", tx.Hash().Hex())
+	// check receipt
+	// if !checkReceipt(client, tx, 3) {
+	// 	log.Fatal("Error: impossible to verify the transaction", tx)
+	// }
+	fmt.Printf("nonce %v, tx sent: %s\n", nonce, tx.Hash().Hex())
+	return tx
+
 }

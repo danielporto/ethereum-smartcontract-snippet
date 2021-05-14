@@ -11,21 +11,28 @@ pragma solidity >=0.7.0 <0.8.5;
 
 contract Counter {
     uint counter = 0;
-    event Increment(uint value);
-    event Decrement(uint value);
+    event Increment(uint);
+    event Decrement(uint);
+    event GetValue(uint);
 
-    function getCount() view public returns (uint) {
-        return counter;
+    function getCounter() public {
+        emit GetValue(counter);
     }
 
-    function increment() public {
-        counter +=1;
+    function increment(uint value) public {
+        counter +=value;
         emit Increment(counter);
     }
 
-    function decrement() public {
-        counter -=1;
+    function decrement(uint value) public {
+        counter -=value;
         emit Decrement(counter);
     }
+
+    function set(uint value) public {
+        counter = value;
+    }
+
+
 
 }

@@ -19,29 +19,30 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"fmt"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"math/big"
+	// "time"
 
 	"github.com/danielporto/ethereum-smartcontract-snippet/counter/contracts"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	// "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+
 	"github.com/spf13/cobra"
 )
 
 // deployCmd represents the deploy command
 var deployCmd = &cobra.Command{
 	Use:   "deploy",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Deploy the smartcontract into the blockchain",
+	Long: `Install and initialize a smartcontract that maintains a counter in a
+Quorum blochckain network.
+Example:
+./counter deploy --url "http://146.193.41.166:22000" --key "1be3b50b31734be48452c29d714941ba165ef0cbf3ccea8ca16c45e3d8d45fb0"`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("deploy called")
-		deployCounter()
+		deployCounter(key, host, port)
 	},
 }
 
@@ -59,20 +60,37 @@ func init() {
 	// deployCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-func deployCounter() {
+// func checkReceipt(ethC *ethclient.Client, tx *types.Transaction, attempts int) bool {
+// 	for i := 0; i < attempts; i++ {
+// 		time.Sleep(200 * time.Millisecond)
+// 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+// 		r, err := ethC.TransactionReceipt(ctx, tx.Hash())
+// 		cancel()
+// 		if r == nil || err != nil {
+// 			continue
+// 		}
+// 		if r.Status == 1 {
+// 			return true
+// 		}
+// 		return false
+// 	}
+// 	return false
+// }
+
+func deployCounter(key, host, port string) (string, uint64, *big.Int) {
 	log.Println("Connecting to ethereum network...")
-	conn, err := ethclient.Dial("http://localhost:7545")
+	url := "http://" + host + ":" +port
+	conn, err := ethclient.Dial(url)
 	if err != nil {
 		log.Fatal("Failed to connect to ethereum node", err)
 	}
 
-	privateKey, err := crypto.HexToECDSA("5175aa0656506256dddd9694bb5b14bc7b0fddf07f4aade4652291829dbad40f")
+	privateKey, err := crypto.HexToECDSA(key)
 	if err != nil {
 		log.Fatal("Error converting the private key from Hex to ECDSA", err)
 	}
 
 	publicKey := privateKey.Public()
-
 	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
 	if !ok {
 		log.Fatal("Error casting public key to ECDSA")
@@ -89,6 +107,7 @@ func deployCounter() {
 	if err != nil {
 		log.Fatal("Error while trying to get the gas price", err)
 	}
+	fmt.Println("Gas price:", gasPrice)
 
 	auth := bind.NewKeyedTransactor(privateKey)
 	auth.Nonce = big.NewInt(int64(nonce))
@@ -101,9 +120,16 @@ func deployCounter() {
 		log.Fatal("Error deploying simple storage", err)
 	}
 
-	fmt.Println(address.Hex())
-	fmt.Println(tx.Hash().Hex())
+	// check receipt
+	// if checkReceipt(conn, tx, 3) == false {
+	// 	log.Fatal("Error: impossible to verify the transaction: ", tx)
+	// }
+
+	fmt.Println("Transaction address:", tx.Hash().Hex())
+	fmt.Println("Contract address", address.Hex())
+	fmt.Println("Contract deployed")
 
 	_ = instance
+	return address.Hex(), nonce, gasPrice
 
 }

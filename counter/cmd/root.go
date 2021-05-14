@@ -18,6 +18,9 @@ package cmd
 import (
 	"fmt"
 	"os"
+
+	log "github.com/sirupsen/logrus"
+
 	"github.com/spf13/cobra"
 
 	homedir "github.com/mitchellh/go-homedir"
@@ -25,20 +28,28 @@ import (
 )
 
 var cfgFile string
+var key string
+
+var host string
+var port string
+var disable_events bool
+
+var amount int        //used for increment and decrement
+var trxgaslimit int32 //used for defining the size of the array to sort
+var duration int      //used for duration of experiment
+var contract string   // used for increment, decrement and print
+var threads int       // used for workload
+var verbosity string  //set log verbosity
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "counter",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+	Short: "A simple smartcontract to maintain a counter",
+	Long: `A golang client that interact with a quorum network to deploy a smartcontract
+that maintains a counter. It installs, change and read the counter from the blockchain. 
+For example:
+counter workload -o increment -c 10 --host "146.193.41.166" --port 23000 \
+   			   --key "1be3b50b31734be48452c29d714941ba165ef0cbf3ccea8ca16c45e3d8d45fb0"`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -54,11 +65,28 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.counter.yaml)")
+	//rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.counter.yaml)")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	//rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+
+	rootCmd.PersistentFlags().StringVarP(&key, "key", "k", "", "key of a network node")
+	rootCmd.MarkPersistentFlagRequired("key")
+	rootCmd.PersistentFlags().StringVarP(&host, "host", "a", "", "hostname or ip address")
+	rootCmd.MarkPersistentFlagRequired("host")
+	rootCmd.PersistentFlags().StringVarP(&port, "port", "p", "", "url of the server to connect to")
+	rootCmd.MarkPersistentFlagRequired("port")
+	rootCmd.PersistentFlags().StringVarP(&verbosity, "verbosity", "v", "info", "Log level (trace, debug, info, warn, error, fatal, panic")
+	rootCmd.PersistentFlags().Int32VarP(&trxgaslimit, "gaslimit", "g", 3000000, "Gas limit for the transaction")
+	rootCmd.PersistentFlags().IntVarP(&amount, "amount", "s", 1, "Amount to increase the counter")
+	rootCmd.PersistentFlags().BoolVarP(&disable_events, "events", "e", false, "url of the server to connect to")
+
+	lvl, err := log.ParseLevel(verbosity)
+	if err != nil {
+		log.Fatal("Invalid log level", err)
+	}
+	log.SetLevel(lvl)
 }
 
 // initConfig reads in config file and ENV variables if set.
