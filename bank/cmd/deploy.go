@@ -25,7 +25,7 @@ import (
 
 	// "time"
 
-	"github.com/danielporto/ethereum-smartcontract-snippet/counter/contracts"
+	"github.com/danielporto/ethereum-smartcontract-snippet/bank/contracts"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 
 	// "github.com/ethereum/go-ethereum/core/types"
@@ -42,10 +42,10 @@ var deployCmd = &cobra.Command{
 	Long: `Install and initialize a smartcontract that maintains a counter in a
 Quorum blochckain network.
 Example:
-./counter deploy --url "http://192.168.10.166:22000" --key "1be3b50b31734be48452c29d714941ba165ef0cbf3ccea8ca16c45e3d8d45fb0"`,
+./bank deploy --host 192.168.10.166 --port 22000 --key "1be3b50b31734be48452c29d714941ba165ef0cbf3ccea8ca16c45e3d8d45fb0"`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("deploy called")
-		deployCounter(key, host, port)
+		deployBank(key, host, port)
 	},
 }
 
@@ -61,6 +61,9 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// deployCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	deployCmd.PersistentFlags().StringVarP(&key, "key", "", "", "key used to install the contract")
+	deployCmd.MarkPersistentFlagRequired("key")
+
 }
 
 // func checkReceipt(ethC *ethclient.Client, tx *types.Transaction, attempts int) bool {
@@ -80,9 +83,9 @@ func init() {
 // 	return false
 // }
 
-func deployCounter(key, host, port string) (string, uint64, *big.Int) {
+func deployBank(key, host, port string) (string, uint64, *big.Int) {
 	log.Println("Connecting to ethereum network...")
-	url := "http://" + host + ":" + port
+	url := "ws://" + host + ":" + port
 	conn, err := ethclient.Dial(url)
 	if err != nil {
 		log.Fatal("Failed to connect to ethereum node", err)
@@ -118,9 +121,9 @@ func deployCounter(key, host, port string) (string, uint64, *big.Int) {
 	auth.GasLimit = uint64(300000)
 	auth.GasPrice = gasPrice
 
-	address, tx, instance, err := contracts.DeployCounter(auth, conn)
+	address, tx, instance, err := contracts.DeployBank(auth, conn)
 	if err != nil {
-		log.Fatal("Error deploying counter", err)
+		log.Fatal("Error deploying bank contract", err)
 	}
 
 	// check receipt

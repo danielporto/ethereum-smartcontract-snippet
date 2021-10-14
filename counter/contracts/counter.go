@@ -4,6 +4,7 @@
 package contracts
 
 import (
+	"errors"
 	"math/big"
 	"strings"
 
@@ -17,6 +18,7 @@ import (
 
 // Reference imports to suppress errors if they are not otherwise used.
 var (
+	_ = errors.New
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
@@ -26,28 +28,41 @@ var (
 	_ = event.NewSubscription
 )
 
-// CounterABI is the input ABI used to generate the binding from.
-const CounterABI = "[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"Decrement\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"GetValue\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"Increment\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"decrement\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getCounter\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"increment\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"set\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
-
-// CounterFuncSigs maps the 4-byte function signature to its string representation.
-var CounterFuncSigs = map[string]string{
-	"3a9ebefd": "decrement(uint256)",
-	"8ada066e": "getCounter()",
-	"7cf5dab0": "increment(uint256)",
-	"60fe47b1": "set(uint256)",
+// CounterMetaData contains all meta data concerning the Counter contract.
+var CounterMetaData = &bind.MetaData{
+	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"Decrement\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"GetValue\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"Increment\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"decrement\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getCounter\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"increment\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"set\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	Sigs: map[string]string{
+		"3a9ebefd": "decrement(uint256)",
+		"8ada066e": "getCounter()",
+		"7cf5dab0": "increment(uint256)",
+		"60fe47b1": "set(uint256)",
+	},
+	Bin: "0x60806040526000805534801561001457600080fd5b506101fe806100246000396000f3fe608060405234801561001057600080fd5b506004361061004c5760003560e01c80633a9ebefd1461005157806360fe47b1146100665780637cf5dab0146100795780638ada066e1461008c575b600080fd5b61006461005f36600461016a565b610094565b005b61006461007436600461016a565b600055565b61006461008736600461016a565b6100e4565b61006461012d565b806000808282546100a5919061019b565b90915550506000546040519081527f32814a5bdfd1b8c3d76c49c54e043d6e8aa93d197a09e16599b567135503f748906020015b60405180910390a150565b806000808282546100f59190610183565b90915550506000546040519081527f51af157c2eee40f68107a47a49c32fbbeb0a3c9e5cd37aa56e88e6be92368a81906020016100d9565b7ff0282ee95e37b3f7538413a321ff8d12bc72094b9ac8861c5f765f0db377862860005460405161016091815260200190565b60405180910390a1565b60006020828403121561017c57600080fd5b5035919050565b60008219821115610196576101966101b2565b500190565b6000828210156101ad576101ad6101b2565b500390565b634e487b7160e01b600052601160045260246000fdfea264697066735822122052ab3b334c134afb319daa716dac4ffa0d67a40f88789fca02348f6fd9a20f1e64736f6c63430008070033",
 }
 
+// CounterABI is the input ABI used to generate the binding from.
+// Deprecated: Use CounterMetaData.ABI instead.
+var CounterABI = CounterMetaData.ABI
+
+// Deprecated: Use CounterMetaData.Sigs instead.
+// CounterFuncSigs maps the 4-byte function signature to its string representation.
+var CounterFuncSigs = CounterMetaData.Sigs
+
 // CounterBin is the compiled bytecode used for deploying new contracts.
-var CounterBin = "0x60806040526000805534801561001457600080fd5b506101fd806100246000396000f3fe608060405234801561001057600080fd5b506004361061004c5760003560e01c80633a9ebefd1461005157806360fe47b1146100665780637cf5dab0146100795780638ada066e1461008c575b600080fd5b61006461005f36600461016a565b610094565b005b61006461007436600461016a565b600055565b61006461008736600461016a565b6100e4565b61006461012d565b806000808282546100a5919061019a565b90915550506000546040519081527f32814a5bdfd1b8c3d76c49c54e043d6e8aa93d197a09e16599b567135503f748906020015b60405180910390a150565b806000808282546100f59190610182565b90915550506000546040519081527f51af157c2eee40f68107a47a49c32fbbeb0a3c9e5cd37aa56e88e6be92368a81906020016100d9565b7ff0282ee95e37b3f7538413a321ff8d12bc72094b9ac8861c5f765f0db377862860005460405161016091815260200190565b60405180910390a1565b60006020828403121561017b578081fd5b5035919050565b60008219821115610195576101956101b1565b500190565b6000828210156101ac576101ac6101b1565b500390565b634e487b7160e01b600052601160045260246000fdfea264697066735822122053ca6ba89e3c11597d4b3d56b61be17c1cbcc5ae705e8445cacd6e9caf698c9264736f6c63430008020033"
+// Deprecated: Use CounterMetaData.Bin instead.
+var CounterBin = CounterMetaData.Bin
 
 // DeployCounter deploys a new Ethereum contract, binding an instance of Counter to it.
 func DeployCounter(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *Counter, error) {
-	parsed, err := abi.JSON(strings.NewReader(CounterABI))
+	parsed, err := CounterMetaData.GetAbi()
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
+	if parsed == nil {
+		return common.Address{}, nil, nil, errors.New("GetABI returned nil")
+	}
 
-	address, tx, contract, err := bind.DeployContract(auth, parsed, common.FromHex(CounterBin), backend)
+	address, tx, contract, err := bind.DeployContract(auth, *parsed, common.FromHex(CounterBin), backend)
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}

@@ -1,5 +1,5 @@
 /*
-Copyright © 2021 NAME HERE <EMAIL ADDRESS>
+Copyright © 2021 DNAIEL PORTO <daniel.porto@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,9 +17,8 @@ package cmd
 
 import (
 	"fmt"
-	"os"
-
 	log "github.com/sirupsen/logrus"
+	"os"
 
 	"github.com/spf13/cobra"
 
@@ -28,29 +27,54 @@ import (
 )
 
 var cfgFile string
+var keys []string
+var keys_str string
 var key string
+var wallets [] string
+var wallets_str string
+
+var origin int
+var target int
 
 var host string
 var port string
 var disable_events bool
 
-var amount int        //used for increment and decrement
-var trxgaslimit int32 //used for defining the size of the array to sort
+var contract string   // used as bank middleware for the transaction
+var money int        //amount for transfer
+var trxgaslimit int32 //used for suggesting the fee for the transaction
 var duration int      //used for duration of experiment
-var contract string   // used for increment, decrement and print
 var threads int       // used for workload
 var verbosity string  //set log verbosity
 
 // rootCmd represents the base command when called without any subcommands
+// 1 eth in (wei)ght = 1 +18 zeros.
+// 0.000001 eth = 1 + 12 zeros wei
 var rootCmd = &cobra.Command{
-	Use:   "counter",
-	Short: "A simple smartcontract to maintain a counter",
-	Long: `A golang client that interact with a quorum network to deploy a smartcontract
-that maintains a counter. It installs, change and read the counter from the blockchain. 
-For example:
-counter workload -o increment -c 10 --host "192.168.10.166" --port 23000 \
-   			   --key "1be3b50b31734be48452c29d714941ba165ef0cbf3ccea8ca16c45e3d8d45fb0"`,
+	Use:   "bank",
+	Short: "A tool to transfer funds between accounts",
+	Long: `A golang client that interact with a quorum network to transfer funds between accounts in the blockchain.`,
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		lvl, err := log.ParseLevel(verbosity)
+		if err != nil {
+			log.Fatal("Invalid log level", err)
+		}
+		log.SetLevel(lvl)
+		log.Debugf("Debug mode enabled")
+	},
 }
+
+
+//Note:
+//// 1 eth in (wei)ght = 1 +18 zeros.
+//// 0.000001 eth = 1 + 12 zeros wei.
+//For example: transfer 0.000001 wei to another account
+//bank workload -o transfer --host "192.168.10.166" --port 23000 \
+//-c 10
+//--keys "1be3b50b31734be48452c29d714941ba165ef0cbf3ccea8ca16c45e3d8d45fb0,9bdd6a2e7cc1ca4a4019029df3834d2633ea6e14034d6dcc3b944396fe13a08b" \
+//--wallets "0xed9d02e382b34818e88b88a309c7fe71e65f419d,0xca843569e3427144cead5e4d5999a3d0ccf92b8e" \
+//--money 1000000000000
+//--origin 0  --target 1
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
@@ -71,22 +95,14 @@ func init() {
 	// when this action is called directly.
 	//rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
-	rootCmd.PersistentFlags().StringVarP(&key, "key", "k", "", "key of a network node")
-	rootCmd.MarkPersistentFlagRequired("key")
-	rootCmd.PersistentFlags().StringVarP(&host, "host", "a", "", "hostname or ip address")
+	rootCmd.PersistentFlags().StringVarP(&host, "host", "a", "", "hostname or ip address of a node in a blockchain network to submit the operation")
 	rootCmd.MarkPersistentFlagRequired("host")
 	rootCmd.PersistentFlags().StringVarP(&port, "port", "p", "", "url of the server to connect to")
 	rootCmd.MarkPersistentFlagRequired("port")
+
 	rootCmd.PersistentFlags().StringVarP(&verbosity, "verbosity", "v", "info", "Log level (trace, debug, info, warn, error, fatal, panic")
 	rootCmd.PersistentFlags().Int32VarP(&trxgaslimit, "gaslimit", "g", 3000000, "Gas limit for the transaction")
-	rootCmd.PersistentFlags().IntVarP(&amount, "amount", "s", 1, "Amount to increase the counter")
 	rootCmd.PersistentFlags().BoolVarP(&disable_events, "events", "e", false, "url of the server to connect to")
-
-	lvl, err := log.ParseLevel(verbosity)
-	if err != nil {
-		log.Fatal("Invalid log level", err)
-	}
-	log.SetLevel(lvl)
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -99,9 +115,9 @@ func initConfig() {
 		home, err := homedir.Dir()
 		cobra.CheckErr(err)
 
-		// Search config in home directory with name ".counter" (without extension).
+		// Search config in home directory with name ".bank" (without extension).
 		viper.AddConfigPath(home)
-		viper.SetConfigName(".counter")
+		viper.SetConfigName(".bank")
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
