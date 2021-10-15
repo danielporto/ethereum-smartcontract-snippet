@@ -70,8 +70,8 @@ bank workload -o [transfer|deploy|mixed] \
 		log.Infof("Max rate to issue operations (suggested tps) %v tps", maxrate)
 		log.Infoln("workload called")
 
-		keys = strings.Split(keys_str,",")
-		wallets = strings.Split(wallets_str,",")
+		keys = strings.Split(keys_str, ",")
+		wallets = strings.Split(wallets_str, ",")
 
 		// if origin == -1 select a key randomly
 		// if target == -1 select a target randomly, target cannot be origin
@@ -80,7 +80,7 @@ bank workload -o [transfer|deploy|mixed] \
 		}
 		if target == -1 {
 			target = origin
-			for ; target == origin ;target = rand.Intn(len(wallets)) {
+			for ; target == origin; target = rand.Intn(len(wallets)) {
 				// just loop for a random num until is different from self
 			}
 		}
@@ -88,14 +88,14 @@ bank workload -o [transfer|deploy|mixed] \
 		log.Debugf("Target:%v wallet:%v\n", target, wallets[target])
 
 		switch operation {
-			case "transfer":
-				workloadTransfer()
-			case "deploy":
-				workloadDeploy()
-			case "mixed":
-				workloadMixed()
-			default:
-				log.Fatal("Operation not supported:", operation)
+		case "transfer":
+			workloadTransfer()
+		case "deploy":
+			workloadDeploy()
+		case "mixed":
+			workloadMixed()
+		default:
+			log.Fatal("Operation not supported:", operation)
 		}
 	},
 }
@@ -230,7 +230,7 @@ func deploy(pk *ecdsa.PrivateKey, c *ethclient.Client, gasPrice *big.Int, nonces
 
 		address, _, _, err := contracts.DeployBank(auth, c)
 		if err != nil {
-			log.Fatal("Error deploying simple storage", err)
+			log.Fatal("Error deploying Bank contract", err)
 		}
 
 		total_transactions++
@@ -278,7 +278,7 @@ func workloadDeploy() {
 	//4. configure gasPrice
 	gasPrice, err := conn.SuggestGasPrice(context.Background())
 	if err != nil {
-		log.Fatal("Error while trying to get the gas price", err)
+		log.Fatal("Error while trying to get the gas price: ", err)
 	}
 
 	go generateNonceAtRate(conn, fromAddress, count, duration, nonceStream, maxrate)
@@ -294,8 +294,8 @@ func workloadDeploy() {
 }
 
 /**********************************************************************************************************************
-* The transfer workload install a single contract and issue operations to transfer a counter
-* It also emits a log with a value of the counter.
+* The transfer workload install a single contract and issue operations to transfer from one wallet to another
+* It also emits a log with a value transferred.
 * The logs allow for detecting byzantine faults that could be possible not captured.
 ***********************************************************************************************************************/
 func transfer(pk *ecdsa.PrivateKey, instance *contracts.Bank, gasPrice *big.Int, nonces <-chan uint64, wg *sync.WaitGroup, threadid int) {
@@ -311,11 +311,11 @@ func transfer(pk *ecdsa.PrivateKey, instance *contracts.Bank, gasPrice *big.Int,
 		auth.GasPrice = gasPrice
 
 		if nonce%uint64(checkpoint) == 0 {
-			log.Infof("Thread %v - counter transactions issued : %v", threadid, total_transactions)
+			log.Infof("Thread %v - transfer transactions issued : %v", threadid, total_transactions)
 			instance.LogTransferOperations(auth)
 			continue // get another nonce
-		} 
-		
+		}
+
 		tx, err := instance.TransferMoneyTo(auth, common.HexToAddress(wallets[target]))
 		if err != nil {
 			log.Fatal("Failed to call transfer transaction method of counter contract. Check the gaslimit for this transaction:", auth.GasLimit, " err:", err)
@@ -376,12 +376,12 @@ func workloadTransfer() {
 	// 4. setup an authenticated transactor with info from credentials and connection configuration
 	auth := bind.NewKeyedTransactor(privateKey)
 	auth.Nonce = big.NewInt(int64(nonce))
-	auth.Value = big.NewInt(0) // not transferring funds, just deploying contract operation
-	auth.GasLimit = uint64(trxgaslimit)   // max value for this transaction
+	auth.Value = big.NewInt(0)          // not transferring funds, just deploying contract operation
+	auth.GasLimit = uint64(trxgaslimit) // max value for this transaction
 	auth.GasPrice = gasPrice
 	contractAddr, _, instance, err := contracts.DeployBank(auth, client)
 	if err != nil {
-		log.Fatal("Impossible to initialize a counter for this workload. ", err)
+		log.Fatal("Impossible to initialize a bank contract for this workload. ", err)
 	}
 	log.Info("Wait for the 5 seconds (blocks) while contract is be mined before issuing operations.")
 	time.Sleep(5 * time.Second)
@@ -419,7 +419,7 @@ func workloadTransfer() {
 }
 
 /**********************************************************************************************************************
-* The mixed workload alternates with operations that install smartcontracts and also execute counter transfer ops
+* The mixed workload alternates with operations that install smartcontracts and also execute transfer ops.
 ***********************************************************************************************************************/
 func mixed(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.Bank, gasPrice *big.Int, nonces <-chan uint64, wg *sync.WaitGroup, threadid int) {
 	defer wg.Done()
@@ -434,7 +434,7 @@ func mixed(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.Bank, 
 		auth.GasPrice = gasPrice
 
 		if nonce%uint64(checkpoint) == 0 {
-			log.Infof("Thread %v - deploy/transfer transactions issued : %v", threadid, total_transactions)
+			log.Infof("Thread %v - deploy/transfer transactions issued: %v", threadid, total_transactions)
 			instance.LogTransferOperations(auth)
 			total_transactions++
 			continue // get another nonce
@@ -443,7 +443,7 @@ func mixed(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.Bank, 
 		if nonce%2 == 0 {
 			address, _, _, err := contracts.DeployBank(auth, c)
 			if err != nil {
-				log.Fatal("Error deploying counter", err)
+				log.Fatal("Error deploying bank contract", err)
 			}
 			log.Debugf("Transaction address: %v\n", address.Hex())
 		} else {
@@ -456,7 +456,7 @@ func mixed(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.Bank, 
 		total_transactions++
 
 	}
-	log.Infof("Thread %v FINISHED - mix transfer/deploy transactions issued : %v", threadid, total_transactions)
+	log.Infof("Thread %v FINISHED - mix deploy/transfer transactions issued : %v", threadid, total_transactions)
 
 }
 
@@ -511,7 +511,7 @@ func workloadMixed() {
 	auth.GasPrice = gasPrice
 	contractAddr, _, instance, err := contracts.DeployBank(auth, client)
 	if err != nil {
-		log.Fatal("Impossible to initialize a counter contract for this workload.", err)
+		log.Fatal("Impossible to initialize a bank contract for this workload.", err)
 	}
 	log.Info("Wait for the 5 seconds (blocks) while contract is be mined before issuing operations.")
 	time.Sleep(5 * time.Second)

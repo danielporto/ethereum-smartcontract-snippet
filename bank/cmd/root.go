@@ -1,5 +1,5 @@
 /*
-Copyright © 2021 DNAIEL PORTO <daniel.porto@gmail.com>
+Copyright © 2021 DANIEL PORTO <daniel.porto@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,8 +17,9 @@ package cmd
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"os"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/spf13/cobra"
 
@@ -30,7 +31,7 @@ var cfgFile string
 var keys []string
 var keys_str string
 var key string
-var wallets [] string
+var wallets []string
 var wallets_str string
 
 var origin int
@@ -41,7 +42,7 @@ var port string
 var disable_events bool
 
 var contract string   // used as bank middleware for the transaction
-var money int        //amount for transfer
+var money int         //amount for transfer
 var trxgaslimit int32 //used for suggesting the fee for the transaction
 var duration int      //used for duration of experiment
 var threads int       // used for workload
@@ -53,7 +54,7 @@ var verbosity string  //set log verbosity
 var rootCmd = &cobra.Command{
 	Use:   "bank",
 	Short: "A tool to transfer funds between accounts",
-	Long: `A golang client that interact with a quorum network to transfer funds between accounts in the blockchain.`,
+	Long:  `A golang client that interact with a quorum network to transfer funds between accounts in the blockchain.`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		lvl, err := log.ParseLevel(verbosity)
 		if err != nil {
@@ -63,7 +64,6 @@ var rootCmd = &cobra.Command{
 		log.Debugf("Debug mode enabled")
 	},
 }
-
 
 //Note:
 //// 1 eth in (wei)ght = 1 +18 zeros.
