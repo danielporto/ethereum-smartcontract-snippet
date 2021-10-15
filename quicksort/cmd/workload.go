@@ -1,5 +1,5 @@
 /*
-Copyright © 2021 NAME HERE <EMAIL ADDRESS>
+Copyright © 2021 Daniel Porto <daniel.porto@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -87,16 +87,17 @@ func generateNonce(init uint64, count, duration int, nonces chan<- uint64) {
 	nonce := init
 	if duration > 0 {
 		for end := time.Now().Add(time.Second * time.Duration(duration)); ; {
+			nonce++
 			if time.Now().After(end) {
 				break
 			}
 			nonces <- nonce
-			nonce++
 		}
+
 	} else {
 		for i := 0; i < count; i++ {
-			nonces <- nonce
 			nonce++
+			nonces <- nonce
 		}
 	}
 	close(nonces)
@@ -211,8 +212,8 @@ func workloadDeploy() {
 
 	// 1. Initialize a connection
 	url := "ws://" + host + ":" + port
-	log.Println("Running deploy workload")
-	log.Println("Connecting to ethereum network...")
+	log.Info("Running deploy workload")
+	log.Infof("Connecting to ethereum network: %v", url)
 
 	conn, err := ethclient.Dial(url)
 	if err != nil {
@@ -291,7 +292,6 @@ func quicksort(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.Qu
 			log.Fatal("Failed to call sort transaction method of quicksort contract. Check the gaslimit for this transaction:", auth.GasLimit, " err:", err)
 		}
 
-
 		total_transactions++
 		log.Debugf("nonce %v, tx sent: %s\n", nonce, tx.Hash().Hex())
 
@@ -306,12 +306,12 @@ func workloadQuicksort() {
 
 	// 1. Initialize a connection
 	url := "ws://" + host + ":" + port
-	log.Info("Running increment workload")
+	log.Info("Running quicksort workload")
 	log.Infof("Connecting to ethereum network: %v", url)
 
 	client, err := ethclient.Dial(url)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Failed to connect to ethereum node", err)
 	}
 
 	// 2. Load credentials
@@ -328,6 +328,7 @@ func workloadQuicksort() {
 	if !ok {
 		log.Fatal("Error casting public key to ECDSA")
 	}
+
 	//now get the account of that private key
 	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
 
@@ -351,7 +352,7 @@ func workloadQuicksort() {
 	auth.GasPrice = gasPrice
 	contractAddr, _, instance, err := contracts.DeployQuickSort(auth, client)
 	if err != nil {
-		log.Fatal("Impossible to initialize the quicksort contract for this workload.", err)
+		log.Fatal("Impossible to initialize a quicksort contract for this workload.", err)
 	}
 	log.Info("Wait for the 5 seconds (blocks) while contract is be mined before issuing operations.")
 	time.Sleep(5 * time.Second)
@@ -394,8 +395,7 @@ func workloadQuicksort() {
 func mixed(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.QuickSort, gasPrice *big.Int, nonces <-chan uint64, wg *sync.WaitGroup, threadid int) {
 	defer wg.Done()
 	total_transactions := 0
-
-	log.Infof("Thread %v STARTED - issuing quicksort/deploy transactions", threadid)
+	log.Infof("Thread %v STARTED - issuing mix deploy/quicksort transactions", threadid)
 
 	var sort func(opts *bind.TransactOpts, size *big.Int) (*types.Transaction, error)
 	// pick the right sort function
@@ -412,8 +412,8 @@ func mixed(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.QuickS
 		auth.GasLimit = uint64(trxgaslimit)
 		auth.GasPrice = gasPrice
 
-		if total_transactions%checkpoint == 0 {
-			log.Infof("Thread %v - mix quicksort/deploy transactions issued : %v", threadid, total_transactions)
+		if nonce%uint64(checkpoint) == 0 {
+			log.Infof("Thread %v - mix deploy/quicksort transactions issued: %v", threadid, total_transactions)
 			instance.PrintAllData(auth)
 			total_transactions++
 			continue // get another nonce
@@ -422,7 +422,7 @@ func mixed(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.QuickS
 		if nonce%2 == 0 {
 			address, _, _, err := contracts.DeployQuickSort(auth, c)
 			if err != nil {
-				log.Fatal("Error deploying quicksort", err)
+				log.Fatal("Error deploying quicksort contract", err)
 			}
 			log.Debugf("Transaction address: %v\n", address.Hex())
 		} else {
@@ -445,12 +445,12 @@ func workloadMixed() {
 
 	// 1. Initialize a connection
 	url := "ws://" + host + ":" + port
-	log.Info("Running mix quicksort/deploy workload")
+	log.Info("Running mix deploy/quicksort workload")
 	log.Infof("Connecting to ethereum network: %v", url)
 
 	client, err := ethclient.Dial(url)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Failed to connect to ethereum node", err)
 	}
 
 	// 2. Load credentials

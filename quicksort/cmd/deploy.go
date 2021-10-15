@@ -43,7 +43,7 @@ var deployCmd = &cobra.Command{
 	Long: `Install and initialize a smartcontract that sorts an array of ints in a
 Quorum blochckain network.
 Example:
-./quicksort deploy --host "146.193.41.166" --port 23000 --key "1be3b50b31734be48452c29d714941ba165ef0cbf3ccea8ca16c45e3d8d45fb0"`,
+./quicksort deploy --host "192.169.10.166" --port 23000 --key "1be3b50b31734be48452c29d714941ba165ef0cbf3ccea8ca16c45e3d8d45fb0"`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("deploy called")
 		p, err := strconv.Atoi(port)

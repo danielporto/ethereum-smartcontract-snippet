@@ -1,5 +1,5 @@
 /*
-Copyright © 2021 NAME HERE <EMAIL ADDRESS>
+Copyright © 2021 DNAIEL PORTO <daniel.porto@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -48,10 +48,18 @@ var rootCmd = &cobra.Command{
 	Long: `A golang client that interact with a quorum network to deploy a smartcontract
 that executes quicksort. It installs, creates an array and run quicksort from the blockchain. 
 For example:
-quicksort workload -o sort -c 10 --host "146.193.41.166" --port 23000 \
+quicksort workload -o sort -c 10 --host "192.169.10.166" --port 23000 \
 --key "1be3b50b31734be48452c29d714941ba165ef0cbf3ccea8ca16c45e3d8d45fb0"`,
-	//././quicksort workload -o sort -s 10  -c 3  --url http://localhost:7545 --key "6a32c1b4b7da9ca8bf3dfb9631871e6953ec97532afc1dcfd640d317bae24169"
+	//././quicksort workload -o sort -s 10  -c 3  --host localhost --port 7545 --key "6a32c1b4b7da9ca8bf3dfb9631871e6953ec97532afc1dcfd640d317bae24169"
 
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		lvl, err := log.ParseLevel(verbosity)
+		if err != nil {
+			log.Fatal("Invalid log level", err)
+		}
+		log.SetLevel(lvl)
+		log.Debugf("Debug mode enabled")
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -73,22 +81,17 @@ func init() {
 	// when this action is called directly.
 	//rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
-	rootCmd.PersistentFlags().StringVarP(&key, "key", "k", "", "key of a network node")
-	rootCmd.MarkPersistentFlagRequired("key")
 	rootCmd.PersistentFlags().StringVarP(&host, "host", "a", "", "hostname or ip address")
 	rootCmd.MarkPersistentFlagRequired("host")
 	rootCmd.PersistentFlags().StringVarP(&port, "port", "p", "", "url of the server to connect to")
 	rootCmd.MarkPersistentFlagRequired("port")
+
 	rootCmd.PersistentFlags().StringVarP(&verbosity, "verbosity", "v", "info", "Log level (trace, debug, info, warn, error, fatal, panic")
 	rootCmd.PersistentFlags().Int32VarP(&trxgaslimit, "gaslimit", "g", 3000000, "Gas limit for the transaction")
-	rootCmd.PersistentFlags().Int32VarP(&payloadsize, "size", "s", 100, "Size of the array to sort (increase the load)")
 	rootCmd.PersistentFlags().BoolVarP(&disable_events, "events", "e", false, "url of the server to connect to")
-
-	lvl, err := log.ParseLevel(verbosity)
-	if err != nil {
-		log.Fatal("Invalid log level", err)
-	}
-	log.SetLevel(lvl)
+	rootCmd.PersistentFlags().StringVarP(&key, "key", "k", "", "key of a network node")
+	rootCmd.MarkPersistentFlagRequired("key")
+	rootCmd.PersistentFlags().Int32VarP(&payloadsize, "size", "s", 100, "Size of the array to sort (increase the load)")
 }
 
 // initConfig reads in config file and ENV variables if set.
