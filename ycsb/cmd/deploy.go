@@ -39,11 +39,11 @@ import (
 var deployCmd = &cobra.Command{
 	Use:   "deploy",
 	Short: "Deploy the smartcontract into the blockchain",
-	Long: `Install and initialize a smartcontract that sorts an array of ints in a
-Quorum blochckain network.
+	Long: `Install and initialize a smartcontract that sorts an array of ints in a Quorum blochckain network.
 Example:
-./cpuheavy deploy --url "http://146.193.41.166:22000" --key "1be3b50b31734be48452c29d714941ba165ef0cbf3ccea8ca16c45e3d8d45fb0"`,
+./ycsb deploy --host 192.168.10.166 --port 22000 --key "1be3b50b31734be48452c29d714941ba165ef0cbf3ccea8ca16c45e3d8d45fb0"`,
 	Run: func(cmd *cobra.Command, args []string) {
+		url := "ws://" + host + ":" + port
 		fmt.Println("deploy called")
 		deployKVstore(key, url)
 	},

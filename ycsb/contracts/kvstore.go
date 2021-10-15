@@ -4,6 +4,7 @@
 package contracts
 
 import (
+	"errors"
 	"math/big"
 	"strings"
 
@@ -17,6 +18,7 @@ import (
 
 // Reference imports to suppress errors if they are not otherwise used.
 var (
+	_ = errors.New
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
@@ -26,26 +28,40 @@ var (
 	_ = event.NewSubscription
 )
 
-// KVstoreABI is the input ABI used to generate the binding from.
-const KVstoreABI = "[{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_key\",\"type\":\"string\"}],\"name\":\"get\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"_value\",\"type\":\"string\"}],\"name\":\"set\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
-
-// KVstoreFuncSigs maps the 4-byte function signature to its string representation.
-var KVstoreFuncSigs = map[string]string{
-	"693ec85e": "get(string)",
-	"e942b516": "set(string,string)",
+// KVstoreMetaData contains all meta data concerning the KVstore contract.
+var KVstoreMetaData = &bind.MetaData{
+	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"PrintInserts\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"name\":\"PrintKVAck\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"PrintTotalInserts\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_key\",\"type\":\"string\"}],\"name\":\"get\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"_value\",\"type\":\"string\"}],\"name\":\"set\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	Sigs: map[string]string{
+		"643e1fee": "PrintTotalInserts()",
+		"693ec85e": "get(string)",
+		"e942b516": "set(string,string)",
+	},
+	Bin: "0x6080604052600060015534801561001557600080fd5b5061053f806100256000396000f3fe608060405234801561001057600080fd5b50600436106100415760003560e01c8063643e1fee14610046578063693ec85e14610050578063e942b51614610079575b600080fd5b61004e61008c565b005b61006361005e366004610340565b6100c9565b60405161007091906103d9565b60405180910390f35b61004e6100873660046103f3565b610179565b7f09fa0639e8315051b795e692c47314cab4d06c7baa13ae2a68d0669cea279a526001546040516100bf91815260200190565b60405180910390a1565b60606000826040516100db9190610457565b908152602001604051809103902080546100f490610473565b80601f016020809104026020016040519081016040528092919081815260200182805461012090610473565b801561016d5780601f106101425761010080835404028352916020019161016d565b820191906000526020600020905b81548152906001019060200180831161015057829003601f168201915b50505050509050919050565b8060008360405161018a9190610457565b908152602001604051809103902090805190602001906101ab929190610204565b5060018060008282546101be91906104ae565b90915550506001546040517fdf4afc806a701f112b8f38868c22361c40e980b57f7c0d0506d26355a45a0c4e916101f891859085906104d4565b60405180910390a15050565b82805461021090610473565b90600052602060002090601f0160209004810192826102325760008555610278565b82601f1061024b57805160ff1916838001178555610278565b82800160010185558215610278579182015b8281111561027857825182559160200191906001019061025d565b50610284929150610288565b5090565b5b808211156102845760008155600101610289565b634e487b7160e01b600052604160045260246000fd5b600082601f8301126102c457600080fd5b813567ffffffffffffffff808211156102df576102df61029d565b604051601f8301601f19908116603f011681019082821181831017156103075761030761029d565b8160405283815286602085880101111561032057600080fd5b836020870160208301376000602085830101528094505050505092915050565b60006020828403121561035257600080fd5b813567ffffffffffffffff81111561036957600080fd5b610375848285016102b3565b949350505050565b60005b83811015610398578181015183820152602001610380565b838111156103a7576000848401525b50505050565b600081518084526103c581602086016020860161037d565b601f01601f19169290920160200192915050565b6020815260006103ec60208301846103ad565b9392505050565b6000806040838503121561040657600080fd5b823567ffffffffffffffff8082111561041e57600080fd5b61042a868387016102b3565b9350602085013591508082111561044057600080fd5b5061044d858286016102b3565b9150509250929050565b6000825161046981846020870161037d565b9190910192915050565b600181811c9082168061048757607f821691505b602082108114156104a857634e487b7160e01b600052602260045260246000fd5b50919050565b600082198211156104cf57634e487b7160e01b600052601160045260246000fd5b500190565b8381526060602082015260006104ed60608301856103ad565b82810360408401526104ff81856103ad565b969550505050505056fea2646970667358221220dd50bef7d1c2ce95c8597809b7731816e2f58a25bbbaa1a1374a681499a949b564736f6c63430008090033",
 }
 
+// KVstoreABI is the input ABI used to generate the binding from.
+// Deprecated: Use KVstoreMetaData.ABI instead.
+var KVstoreABI = KVstoreMetaData.ABI
+
+// Deprecated: Use KVstoreMetaData.Sigs instead.
+// KVstoreFuncSigs maps the 4-byte function signature to its string representation.
+var KVstoreFuncSigs = KVstoreMetaData.Sigs
+
 // KVstoreBin is the compiled bytecode used for deploying new contracts.
-var KVstoreBin = "0x608060405234801561001057600080fd5b50610422806100206000396000f3fe608060405234801561001057600080fd5b50600436106100365760003560e01c8063693ec85e1461003b578063e942b51614610064575b600080fd5b61004e610049366004610280565b610079565b60405161005b9190610338565b60405180910390f35b6100776100723660046102bb565b610129565b005b606060008260405161008b919061031c565b908152602001604051809103902080546100a49061039b565b80601f01602080910402602001604051908101604052809291908181526020018280546100d09061039b565b801561011d5780601f106100f25761010080835404028352916020019161011d565b820191906000526020600020905b81548152906001019060200180831161010057829003601f168201915b50505050509050919050565b8060008360405161013a919061031c565b9081526020016040518091039020908051906020019061015b929190610160565b505050565b82805461016c9061039b565b90600052602060002090601f01602090048101928261018e57600085556101d4565b82601f106101a757805160ff19168380011785556101d4565b828001600101855582156101d4579182015b828111156101d45782518255916020019190600101906101b9565b506101e09291506101e4565b5090565b5b808211156101e057600081556001016101e5565b600082601f830112610209578081fd5b813567ffffffffffffffff80821115610224576102246103d6565b604051601f8301601f19908116603f0116810190828211818310171561024c5761024c6103d6565b81604052838152866020858801011115610264578485fd5b8360208701602083013792830160200193909352509392505050565b600060208284031215610291578081fd5b813567ffffffffffffffff8111156102a7578182fd5b6102b3848285016101f9565b949350505050565b600080604083850312156102cd578081fd5b823567ffffffffffffffff808211156102e4578283fd5b6102f0868387016101f9565b93506020850135915080821115610305578283fd5b50610312858286016101f9565b9150509250929050565b6000825161032e81846020870161036b565b9190910192915050565b600060208252825180602084015261035781604085016020870161036b565b601f01601f19169190910160400192915050565b60005b8381101561038657818101518382015260200161036e565b83811115610395576000848401525b50505050565b6002810460018216806103af57607f821691505b602082108114156103d057634e487b7160e01b600052602260045260246000fd5b50919050565b634e487b7160e01b600052604160045260246000fdfea264697066735822122043235aba1e2c5f299df2458942e6b03d9212c9ad7afda791d4679e2a319d715364736f6c63430008020033"
+// Deprecated: Use KVstoreMetaData.Bin instead.
+var KVstoreBin = KVstoreMetaData.Bin
 
 // DeployKVstore deploys a new Ethereum contract, binding an instance of KVstore to it.
 func DeployKVstore(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *KVstore, error) {
-	parsed, err := abi.JSON(strings.NewReader(KVstoreABI))
+	parsed, err := KVstoreMetaData.GetAbi()
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
+	if parsed == nil {
+		return common.Address{}, nil, nil, errors.New("GetABI returned nil")
+	}
 
-	address, tx, contract, err := bind.DeployContract(auth, parsed, common.FromHex(KVstoreBin), backend)
+	address, tx, contract, err := bind.DeployContract(auth, *parsed, common.FromHex(KVstoreBin), backend)
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
@@ -225,6 +241,27 @@ func (_KVstore *KVstoreCallerSession) Get(_key string) (string, error) {
 	return _KVstore.Contract.Get(&_KVstore.CallOpts, _key)
 }
 
+// PrintTotalInserts is a paid mutator transaction binding the contract method 0x643e1fee.
+//
+// Solidity: function PrintTotalInserts() returns()
+func (_KVstore *KVstoreTransactor) PrintTotalInserts(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _KVstore.contract.Transact(opts, "PrintTotalInserts")
+}
+
+// PrintTotalInserts is a paid mutator transaction binding the contract method 0x643e1fee.
+//
+// Solidity: function PrintTotalInserts() returns()
+func (_KVstore *KVstoreSession) PrintTotalInserts() (*types.Transaction, error) {
+	return _KVstore.Contract.PrintTotalInserts(&_KVstore.TransactOpts)
+}
+
+// PrintTotalInserts is a paid mutator transaction binding the contract method 0x643e1fee.
+//
+// Solidity: function PrintTotalInserts() returns()
+func (_KVstore *KVstoreTransactorSession) PrintTotalInserts() (*types.Transaction, error) {
+	return _KVstore.Contract.PrintTotalInserts(&_KVstore.TransactOpts)
+}
+
 // Set is a paid mutator transaction binding the contract method 0xe942b516.
 //
 // Solidity: function set(string _key, string _value) returns()
@@ -244,4 +281,274 @@ func (_KVstore *KVstoreSession) Set(_key string, _value string) (*types.Transact
 // Solidity: function set(string _key, string _value) returns()
 func (_KVstore *KVstoreTransactorSession) Set(_key string, _value string) (*types.Transaction, error) {
 	return _KVstore.Contract.Set(&_KVstore.TransactOpts, _key, _value)
+}
+
+// KVstorePrintInsertsIterator is returned from FilterPrintInserts and is used to iterate over the raw logs and unpacked data for PrintInserts events raised by the KVstore contract.
+type KVstorePrintInsertsIterator struct {
+	Event *KVstorePrintInserts // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *KVstorePrintInsertsIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(KVstorePrintInserts)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(KVstorePrintInserts)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *KVstorePrintInsertsIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *KVstorePrintInsertsIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// KVstorePrintInserts represents a PrintInserts event raised by the KVstore contract.
+type KVstorePrintInserts struct {
+	Arg0 *big.Int
+	Raw  types.Log // Blockchain specific contextual infos
+}
+
+// FilterPrintInserts is a free log retrieval operation binding the contract event 0x09fa0639e8315051b795e692c47314cab4d06c7baa13ae2a68d0669cea279a52.
+//
+// Solidity: event PrintInserts(uint256 arg0)
+func (_KVstore *KVstoreFilterer) FilterPrintInserts(opts *bind.FilterOpts) (*KVstorePrintInsertsIterator, error) {
+
+	logs, sub, err := _KVstore.contract.FilterLogs(opts, "PrintInserts")
+	if err != nil {
+		return nil, err
+	}
+	return &KVstorePrintInsertsIterator{contract: _KVstore.contract, event: "PrintInserts", logs: logs, sub: sub}, nil
+}
+
+// WatchPrintInserts is a free log subscription operation binding the contract event 0x09fa0639e8315051b795e692c47314cab4d06c7baa13ae2a68d0669cea279a52.
+//
+// Solidity: event PrintInserts(uint256 arg0)
+func (_KVstore *KVstoreFilterer) WatchPrintInserts(opts *bind.WatchOpts, sink chan<- *KVstorePrintInserts) (event.Subscription, error) {
+
+	logs, sub, err := _KVstore.contract.WatchLogs(opts, "PrintInserts")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(KVstorePrintInserts)
+				if err := _KVstore.contract.UnpackLog(event, "PrintInserts", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParsePrintInserts is a log parse operation binding the contract event 0x09fa0639e8315051b795e692c47314cab4d06c7baa13ae2a68d0669cea279a52.
+//
+// Solidity: event PrintInserts(uint256 arg0)
+func (_KVstore *KVstoreFilterer) ParsePrintInserts(log types.Log) (*KVstorePrintInserts, error) {
+	event := new(KVstorePrintInserts)
+	if err := _KVstore.contract.UnpackLog(event, "PrintInserts", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// KVstorePrintKVAckIterator is returned from FilterPrintKVAck and is used to iterate over the raw logs and unpacked data for PrintKVAck events raised by the KVstore contract.
+type KVstorePrintKVAckIterator struct {
+	Event *KVstorePrintKVAck // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *KVstorePrintKVAckIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(KVstorePrintKVAck)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(KVstorePrintKVAck)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *KVstorePrintKVAckIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *KVstorePrintKVAckIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// KVstorePrintKVAck represents a PrintKVAck event raised by the KVstore contract.
+type KVstorePrintKVAck struct {
+	Arg0 *big.Int
+	Arg1 string
+	Arg2 string
+	Raw  types.Log // Blockchain specific contextual infos
+}
+
+// FilterPrintKVAck is a free log retrieval operation binding the contract event 0xdf4afc806a701f112b8f38868c22361c40e980b57f7c0d0506d26355a45a0c4e.
+//
+// Solidity: event PrintKVAck(uint256 arg0, string arg1, string arg2)
+func (_KVstore *KVstoreFilterer) FilterPrintKVAck(opts *bind.FilterOpts) (*KVstorePrintKVAckIterator, error) {
+
+	logs, sub, err := _KVstore.contract.FilterLogs(opts, "PrintKVAck")
+	if err != nil {
+		return nil, err
+	}
+	return &KVstorePrintKVAckIterator{contract: _KVstore.contract, event: "PrintKVAck", logs: logs, sub: sub}, nil
+}
+
+// WatchPrintKVAck is a free log subscription operation binding the contract event 0xdf4afc806a701f112b8f38868c22361c40e980b57f7c0d0506d26355a45a0c4e.
+//
+// Solidity: event PrintKVAck(uint256 arg0, string arg1, string arg2)
+func (_KVstore *KVstoreFilterer) WatchPrintKVAck(opts *bind.WatchOpts, sink chan<- *KVstorePrintKVAck) (event.Subscription, error) {
+
+	logs, sub, err := _KVstore.contract.WatchLogs(opts, "PrintKVAck")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(KVstorePrintKVAck)
+				if err := _KVstore.contract.UnpackLog(event, "PrintKVAck", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParsePrintKVAck is a log parse operation binding the contract event 0xdf4afc806a701f112b8f38868c22361c40e980b57f7c0d0506d26355a45a0c4e.
+//
+// Solidity: event PrintKVAck(uint256 arg0, string arg1, string arg2)
+func (_KVstore *KVstoreFilterer) ParsePrintKVAck(log types.Log) (*KVstorePrintKVAck, error) {
+	event := new(KVstorePrintKVAck)
+	if err := _KVstore.contract.UnpackLog(event, "PrintKVAck", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
 }
