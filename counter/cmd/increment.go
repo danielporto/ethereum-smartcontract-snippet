@@ -67,7 +67,7 @@ func init() {
 func Increment(key, host, port string) *types.Transaction {
 
 	// 1. Initialize a connection
-	url := "http://" + host +":"+port
+	url := "ws://" + host +":"+port
 	client, err := ethclient.Dial(url)
 	if err != nil {
 		log.Fatal(err)

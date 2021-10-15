@@ -1,5 +1,5 @@
 /*
-Copyright © 2021 NAME HERE <EMAIL ADDRESS>
+Copyright © 2021 DNAIEL PORTO <daniel.porto@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -50,6 +50,14 @@ that maintains a counter. It installs, change and read the counter from the bloc
 For example:
 counter workload -o increment -c 10 --host "192.168.10.166" --port 23000 \
    			   --key "1be3b50b31734be48452c29d714941ba165ef0cbf3ccea8ca16c45e3d8d45fb0"`,
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		lvl, err := log.ParseLevel(verbosity)
+		if err != nil {
+			log.Fatal("Invalid log level", err)
+		}
+		log.SetLevel(lvl)
+		log.Debugf("Debug mode enabled")
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -82,11 +90,6 @@ func init() {
 	rootCmd.PersistentFlags().IntVarP(&amount, "amount", "s", 1, "Amount to increase the counter")
 	rootCmd.PersistentFlags().BoolVarP(&disable_events, "events", "e", false, "url of the server to connect to")
 
-	lvl, err := log.ParseLevel(verbosity)
-	if err != nil {
-		log.Fatal("Invalid log level", err)
-	}
-	log.SetLevel(lvl)
 }
 
 // initConfig reads in config file and ENV variables if set.

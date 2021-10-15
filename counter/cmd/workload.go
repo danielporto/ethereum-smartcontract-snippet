@@ -1,5 +1,5 @@
 /*
-Copyright © 2021 NAME HERE <EMAIL ADDRESS>
+Copyright © 2021 Daniel Porto <daniel.porto@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -272,8 +272,8 @@ func increment(pk *ecdsa.PrivateKey, instance *contracts.Counter, gasPrice *big.
 			log.Infof("Thread %v - counter transactions issued : %v", threadid, total_transactions)
 			instance.GetCounter(auth)
 			continue // get another nonce
-		} 
-		
+		}
+
 		tx, err := instance.Increment(auth, big.NewInt(int64(amount)))
 		if err != nil {
 			log.Fatal("Failed to call increment transaction method of counter contract. Check the gaslimit for this transaction:", auth.GasLimit, " err:", err)
