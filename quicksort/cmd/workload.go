@@ -18,6 +18,7 @@ package cmd
 import (
 	"context"
 	"crypto/ecdsa"
+	"fmt"
 	"math/big"
 	"strconv"
 	"sync"
@@ -39,6 +40,9 @@ var operation string
 var count int
 var maxrate int // using for suggesting a workload value in tps
 var checkpoint int
+
+var requestNanotimeMap sync.Map
+var stats StatsStorage
 
 // workloadCmd represents the workload command
 var workloadCmd = &cobra.Command{
@@ -77,6 +81,7 @@ func init() {
 	workloadCmd.PersistentFlags().IntVarP(&threads, "threads", "t", 1, "Number of threads")
 	workloadCmd.PersistentFlags().IntVarP(&maxrate, "rate", "r", 100, "Max operations per second for each thread (suggested value)")
 	workloadCmd.PersistentFlags().IntVarP(&checkpoint, "checkpoint", "q", 5000, "Print total operations after X operations issued.")
+	workloadCmd.PersistentFlags().StringVarP(&client_id, "id", "", "undefined", "client identifier")
 
 }
 
@@ -121,18 +126,16 @@ func generateNonceAtRate(client *ethclient.Client, fromAddress common.Address, c
 			if time.Now().After(end) {
 				break
 			}
-			rl.Take()
 			nonces <- nonce
 			nonce++
-
+			rl.Take()
 		}
 
 	} else {
 		for i := 0; i < count; i++ {
-			rl.Take()
 			nonces <- nonce
 			nonce++
-
+			rl.Take()
 		}
 	}
 	close(nonces)
@@ -157,10 +160,12 @@ func watchContractEvents(contractAddr common.Address, done chan struct{}) {
 	log.Infof("Operations report checkpoint: %v ops", checkpoint)
 	log.Infof("Logging thread: Subscribing to contract events: %v", wsurl)
 	// initialize the monitor threads for each event
-	go watchArrayEvents(client, contractAddr, stop)
-	go watchArrayInfoEvents(client, contractAddr, stop)
-	go watchHashEvents(client, contractAddr, stop)
-	go watchSetElementQtyEvents(client, contractAddr, stop)
+	go watchPrintArray(client, contractAddr, stop)
+	go watchPrintArrayInfo(client, contractAddr, stop)
+	go watchPrintHash(client, contractAddr, stop)
+	go watchPrintSetElementQty(client, contractAddr, stop)
+	go watchPrintConfirmation(client, contractAddr, stop, &requestNanotimeMap, &stats)
+	go watchPrintConfirmationDebug(client, contractAddr, stop)
 
 	log.Debug("Logging thread: Waiting for logs to be closed")
 	// wait for the signal to stop
@@ -168,6 +173,8 @@ func watchContractEvents(contractAddr common.Address, done chan struct{}) {
 	log.Info("Logging thread: Teardown subscription to contract events.")
 
 	//stop all 4 logging threads
+	<-stop
+	<-stop
 	<-stop
 	<-stop
 	<-stop
@@ -266,13 +273,14 @@ func quicksort(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.Qu
 	total_transactions := 0
 	log.Infof("Thread %v STARTED - issuing quicksort transactions", threadid)
 
-	var sort func(opts *bind.TransactOpts, size *big.Int) (*types.Transaction, error)
+	var sort func(opts *bind.TransactOpts, size *big.Int, id string) (*types.Transaction, error)
 	// pick the right sort function
 	if verbosity == "debug" {
 		sort = instance.DebugSort
 	} else {
 		sort = instance.Sort
 	}
+
 
 	for nonce := range nonces {
 		auth := bind.NewKeyedTransactor(pk)
@@ -287,16 +295,20 @@ func quicksort(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.Qu
 			continue // get another nonce
 		}
 
-		tx, err := sort(auth, big.NewInt(int64(payloadsize)))
+		id := fmt.Sprintf("%v_tx_%v", client_id, nonce)
+		tIni := time.Now().UnixNano() // get the timestamp in nanosseconds
+		tx, err := sort(auth, big.NewInt(int64(payloadsize)), id)
 		if err != nil {
 			log.Fatal("Failed to call sort transaction method of quicksort contract. Check the gaslimit for this transaction:", auth.GasLimit, " err:", err)
 		}
+		requestNanotimeMap.Store(id,tIni) //stores the timestamp in which the request was made (this will be updated by the event function)
 
 		total_transactions++
 		log.Debugf("nonce %v, tx sent: %s\n", nonce, tx.Hash().Hex())
 
 	}
 	log.Infof("Thread %v FINISHED - quicksort transactions issued : %v", threadid, total_transactions)
+	stats.PrintStatsMap()
 
 }
 
@@ -397,7 +409,7 @@ func mixed(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.QuickS
 	total_transactions := 0
 	log.Infof("Thread %v STARTED - issuing mix deploy/quicksort transactions", threadid)
 
-	var sort func(opts *bind.TransactOpts, size *big.Int) (*types.Transaction, error)
+	var sort func(opts *bind.TransactOpts, size *big.Int, id string) (*types.Transaction, error)
 	// pick the right sort function
 	if verbosity == "debug" {
 		sort = instance.DebugSort
@@ -426,7 +438,8 @@ func mixed(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.QuickS
 			}
 			log.Debugf("Transaction address: %v\n", address.Hex())
 		} else {
-			tx, err := sort(auth, big.NewInt(int64(payloadsize)))
+			id := fmt.Sprintf("%v_tx_%v",  client_id,nonce)
+			tx, err := sort(auth, big.NewInt(int64(payloadsize)), id)
 			if err != nil {
 				log.Fatal("Failed to call transaction method: ", err)
 			}
@@ -456,7 +469,7 @@ func workloadMixed() {
 	// 2. Load credentials
 	// get credentials to write
 	// from ganache the private key is in the key icon of any account/wallet
-	// ECDSA (elyptic curve DSA is the standard used by ethereum)
+	// ECDSA (elliptic curve DSA is the standard used by ethereum)
 	privateKey, err := crypto.HexToECDSA(key)
 	if err != nil {
 		log.Fatal("Error converting the private key from Hex to ECDSA", err)

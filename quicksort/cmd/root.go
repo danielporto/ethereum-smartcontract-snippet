@@ -40,6 +40,7 @@ var duration int      //used for duration of experiment
 var contract string   // used for debuging print
 var threads int       // used for workload
 var verbosity string  //set log verbosity
+var client_id string // client identifier to match transaction response
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -49,7 +50,14 @@ var rootCmd = &cobra.Command{
 that executes quicksort. It installs, creates an array and run quicksort from the blockchain. 
 For example:
 quicksort workload -o sort -c 10 --host "192.169.10.166" --port 23000 \
---key "1be3b50b31734be48452c29d714941ba165ef0cbf3ccea8ca16c45e3d8d45fb0"`,
+--key "1be3b50b31734be48452c29d714941ba165ef0cbf3ccea8ca16c45e3d8d45fb0"  --id "client_01"\
+
+WARNING - in case of using multiple instances of this client instead of thread, use a different account
+to prevent Nonce collision!!!!
+`,
+
+
+
 	//././quicksort workload -o sort -s 10  -c 3  --host localhost --port 7545 --key "6a32c1b4b7da9ca8bf3dfb9631871e6953ec97532afc1dcfd640d317bae24169"
 
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {

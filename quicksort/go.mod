@@ -4,7 +4,6 @@ go 1.16
 
 require (
 	github.com/btcsuite/btcd v0.22.0-beta // indirect
-	github.com/consensys/gurvy v0.3.8 // indirect
 	github.com/ethereum/go-ethereum v1.10.9
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/sirupsen/logrus v1.2.0

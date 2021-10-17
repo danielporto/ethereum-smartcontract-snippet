@@ -30,13 +30,13 @@ var (
 
 // QuickSortMetaData contains all meta data concerning the QuickSort contract.
 var QuickSortMetaData = &bind.MetaData{
-	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256[]\",\"name\":\"\",\"type\":\"uint256[]\"}],\"name\":\"PrintArray\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"uint256[]\",\"name\":\"\",\"type\":\"uint256[]\"}],\"name\":\"PrintArrayInfo\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"PrintHash\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"PrintSetElementQty\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"size\",\"type\":\"uint256\"}],\"name\":\"debugSort\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"printAllData\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"size\",\"type\":\"uint256\"}],\"name\":\"sort\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256[]\",\"name\":\"\",\"type\":\"uint256[]\"}],\"name\":\"PrintArray\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"uint256[]\",\"name\":\"\",\"type\":\"uint256[]\"}],\"name\":\"PrintArrayInfo\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"PrintConfirmation\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"uint256[]\",\"name\":\"\",\"type\":\"uint256[]\"}],\"name\":\"PrintConfirmationDebug\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"PrintHash\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"PrintSetElementQty\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"size\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"id\",\"type\":\"string\"}],\"name\":\"debugSort\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"printAllData\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"size\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"id\",\"type\":\"string\"}],\"name\":\"sort\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
 	Sigs: map[string]string{
-		"32a66a63": "debugSort(uint256)",
+		"61e4b057": "debugSort(uint256,string)",
 		"d969f9f4": "printAllData()",
-		"fe913865": "sort(uint256)",
+		"89b8e04c": "sort(uint256,string)",
 	},
-	Bin: "0x608060405234801561001057600080fd5b506107e0806100206000396000f3fe608060405234801561001057600080fd5b50600436106100415760003560e01c806332a66a6314610046578063d969f9f41461005b578063fe91386514610063575b600080fd5b6100596100543660046105b1565b610076565b005b6100596101f8565b6100596100713660046105b1565b6102a9565b60008167ffffffffffffffff81111561009157610091610794565b6040519080825280602002602001820160405280156100ba578160200160208202803683370190505b50905060005b8151811015610102576100d38184610703565b8282815181106100e5576100e561077e565b6020908102919091010152806100fa81610758565b9150506100c0565b506000816040516020016101169190610605565b6040516020818303038152906040528051906020012090507f3428030cccc788be8ed6d0f32eb4f0fa5fa9958367fe596551a986ddd76dc9038382846040516101619392919061061f565b60405180910390a16101828260006001855161017d9190610703565b6103b7565b6000826040516020016101959190610605565b6040516020818303038152906040528051906020012090506101b78185610538565b7f3428030cccc788be8ed6d0f32eb4f0fa5fa9958367fe596551a986ddd76dc9038482856040516101ea9392919061061f565b60405180910390a150505050565b60005b6002548110156102a657600080600201828154811061021c5761021c61077e565b60009182526020808320919091015480835282825260408084205460025460018552948290205482519182529381018390529081018690526060810193909352608083019190915291507fc2a813325c8b15ae781043d7e241ff901b9a7f7403122547f1e33ee61a8c21139060a00160405180910390a1508061029e81610758565b9150506101fb565b50565b60008167ffffffffffffffff8111156102c4576102c4610794565b6040519080825280602002602001820160405280156102ed578160200160208202803683370190505b50905060005b8151811015610335576103068184610703565b8282815181106103185761031861077e565b60209081029190910101528061032d81610758565b9150506102f3565b5061034a8160006001845161017d9190610703565b60008160405160200161035d9190610605565b60405160208183030381529060405280519060200120905061037f8184610538565b6040518181527fff5f0f4ae79415c7d9c291f9207f5a799f2fcfc9cb2ba600fe443ad1674ae2869060200160405180910390a1505050565b8181808214156103c8575050505050565b60008560026103d787876106c4565b6103e19190610688565b6103eb9087610647565b815181106103fb576103fb61077e565b602002602001015190505b81831361050a575b808684815181106104215761042161077e565b60200260200101511015610441578261043981610738565b93505061040e565b8582815181106104535761045361077e565b6020026020010151811015610474578161046c8161071a565b925050610441565b8183136105055785828151811061048d5761048d61077e565b60200260200101518684815181106104a7576104a761077e565b60200260200101518785815181106104c1576104c161077e565b602002602001018885815181106104da576104da61077e565b602090810291909101019190915252826104f381610738565b93505081806105019061071a565b9250505b610406565b8185121561051d5761051d8686846103b7565b83831215610530576105308684866103b7565b505050505050565b60008281526001602052604090205461058e5760008281526020819052604081208290556002805460018101825591527f405787fa12a823e0f2b7631cc41b3ba8828b3321ca811111fa75cd3aa3bb5ace018290555b60008281526001602052604081208054916105a883610758565b91905055505050565b6000602082840312156105c357600080fd5b5035919050565b600081518084526020808501945080840160005b838110156105fa578151875295820195908201906001016105de565b509495945050505050565b60208152600061061860208301846105ca565b9392505050565b83815282602082015260606040820152600061063e60608301846105ca565b95945050505050565b600080821280156001600160ff1b038490038513161561066957610669610768565b600160ff1b839003841281161561068257610682610768565b50500190565b6000826106a557634e487b7160e01b600052601260045260246000fd5b600160ff1b8214600019841416156106bf576106bf610768565b500590565b60008083128015600160ff1b8501841216156106e2576106e2610768565b6001600160ff1b03840183138116156106fd576106fd610768565b50500390565b60008282101561071557610715610768565b500390565b6000600160ff1b82141561073057610730610768565b506000190190565b60006001600160ff1b0382141561075157610751610768565b5060010190565b6000600019821415610751576107515b634e487b7160e01b600052601160045260246000fd5b634e487b7160e01b600052603260045260246000fd5b634e487b7160e01b600052604160045260246000fdfea2646970667358221220c346608b34b86ac9193f11dda3bf8336b179d743332f63ea309f797c20810e2964736f6c63430008070033",
+	Bin: "0x608060405234801561001057600080fd5b506108e2806100206000396000f3fe608060405234801561001057600080fd5b50600436106100415760003560e01c806361e4b0571461004657806389b8e04c1461005b578063d969f9f41461006e575b600080fd5b6100596100543660046105c1565b610076565b005b6100596100693660046105c1565b6101fe565b610059610316565b60008367ffffffffffffffff8111156100915761009161063d565b6040519080825280602002602001820160405280156100ba578160200160208202803683370190505b50905060005b8151811015610102576100d38186610669565b8282815181106100e5576100e5610680565b6020908102919091010152806100fa81610696565b9150506100c0565b5060008160405160200161011691906106ec565b6040516020818303038152906040528051906020012090507f3428030cccc788be8ed6d0f32eb4f0fa5fa9958367fe596551a986ddd76dc90385828460405161016193929190610706565b60405180910390a16101828260006001855161017d9190610669565b6103c7565b60008260405160200161019591906106ec565b6040516020818303038152906040528051906020012090506101b78187610548565b7ff4788eb76bf7c55c259749df1e9b259a9cfec4982d8b48f926db15d10f51d64c85858884876040516101ee959493929190610757565b60405180910390a1505050505050565b60008367ffffffffffffffff8111156102195761021961063d565b604051908082528060200260200182016040528015610242578160200160208202803683370190505b50905060005b815181101561028a5761025b8186610669565b82828151811061026d5761026d610680565b60209081029190910101528061028281610696565b915050610248565b5061029f8160006001845161017d9190610669565b6000816040516020016102b291906106ec565b6040516020818303038152906040528051906020012090506102d48186610548565b7ff509cf6649381810c1e71003d0b015833d7434b9e56cf8807d83a949d88ced5d84848360405161030793929190610795565b60405180910390a15050505050565b60005b6002548110156103c457600080600201828154811061033a5761033a610680565b60009182526020808320919091015480835282825260408084205460025460018552948290205482519182529381018390529081018690526060810193909352608083019190915291507fc2a813325c8b15ae781043d7e241ff901b9a7f7403122547f1e33ee61a8c21139060a00160405180910390a150806103bc81610696565b915050610319565b50565b8181808214156103d8575050505050565b60008560026103e787876107b9565b6103f191906107f8565b6103fb9087610834565b8151811061040b5761040b610680565b602002602001015190505b81831361051a575b8086848151811061043157610431610680565b60200260200101511015610451578261044981610875565b93505061041e565b85828151811061046357610463610680565b6020026020010151811015610484578161047c8161088e565b925050610451565b8183136105155785828151811061049d5761049d610680565b60200260200101518684815181106104b7576104b7610680565b60200260200101518785815181106104d1576104d1610680565b602002602001018885815181106104ea576104ea610680565b6020908102919091010191909152528261050381610875565b93505081806105119061088e565b9250505b610416565b8185121561052d5761052d8686846103c7565b83831215610540576105408684866103c7565b505050505050565b60008281526001602052604090205461059e5760008281526020819052604081208290556002805460018101825591527f405787fa12a823e0f2b7631cc41b3ba8828b3321ca811111fa75cd3aa3bb5ace018290555b60008281526001602052604081208054916105b883610696565b91905055505050565b6000806000604084860312156105d657600080fd5b83359250602084013567ffffffffffffffff808211156105f557600080fd5b818601915086601f83011261060957600080fd5b81358181111561061857600080fd5b87602082850101111561062a57600080fd5b6020830194508093505050509250925092565b634e487b7160e01b600052604160045260246000fd5b634e487b7160e01b600052601160045260246000fd5b60008282101561067b5761067b610653565b500390565b634e487b7160e01b600052603260045260246000fd5b60006000198214156106aa576106aa610653565b5060010190565b600081518084526020808501945080840160005b838110156106e1578151875295820195908201906001016106c5565b509495945050505050565b6020815260006106ff60208301846106b1565b9392505050565b83815282602082015260606040820152600061072560608301846106b1565b95945050505050565b81835281816020850137506000828201602090810191909152601f909101601f19169091010190565b60808152600061076b60808301878961072e565b856020840152846040840152828103606084015261078981856106b1565b98975050505050505050565b6040815260006107a960408301858761072e565b9050826020830152949350505050565b60008083128015600160ff1b8501841216156107d7576107d7610653565b6001600160ff1b03840183138116156107f2576107f2610653565b50500390565b60008261081557634e487b7160e01b600052601260045260246000fd5b600160ff1b82146000198414161561082f5761082f610653565b500590565b600080821280156001600160ff1b038490038513161561085657610856610653565b600160ff1b839003841281161561086f5761086f610653565b50500190565b60006001600160ff1b038214156106aa576106aa610653565b6000600160ff1b8214156108a4576108a4610653565b50600019019056fea2646970667358221220fd47615cfd8df5daaa808f79a48c411fda3c19dd39a6e0d3c8c84059253b3b6664736f6c63430008090033",
 }
 
 // QuickSortABI is the input ABI used to generate the binding from.
@@ -210,25 +210,25 @@ func (_QuickSort *QuickSortTransactorRaw) Transact(opts *bind.TransactOpts, meth
 	return _QuickSort.Contract.contract.Transact(opts, method, params...)
 }
 
-// DebugSort is a paid mutator transaction binding the contract method 0x32a66a63.
+// DebugSort is a paid mutator transaction binding the contract method 0x61e4b057.
 //
-// Solidity: function debugSort(uint256 size) returns()
-func (_QuickSort *QuickSortTransactor) DebugSort(opts *bind.TransactOpts, size *big.Int) (*types.Transaction, error) {
-	return _QuickSort.contract.Transact(opts, "debugSort", size)
+// Solidity: function debugSort(uint256 size, string id) returns()
+func (_QuickSort *QuickSortTransactor) DebugSort(opts *bind.TransactOpts, size *big.Int, id string) (*types.Transaction, error) {
+	return _QuickSort.contract.Transact(opts, "debugSort", size, id)
 }
 
-// DebugSort is a paid mutator transaction binding the contract method 0x32a66a63.
+// DebugSort is a paid mutator transaction binding the contract method 0x61e4b057.
 //
-// Solidity: function debugSort(uint256 size) returns()
-func (_QuickSort *QuickSortSession) DebugSort(size *big.Int) (*types.Transaction, error) {
-	return _QuickSort.Contract.DebugSort(&_QuickSort.TransactOpts, size)
+// Solidity: function debugSort(uint256 size, string id) returns()
+func (_QuickSort *QuickSortSession) DebugSort(size *big.Int, id string) (*types.Transaction, error) {
+	return _QuickSort.Contract.DebugSort(&_QuickSort.TransactOpts, size, id)
 }
 
-// DebugSort is a paid mutator transaction binding the contract method 0x32a66a63.
+// DebugSort is a paid mutator transaction binding the contract method 0x61e4b057.
 //
-// Solidity: function debugSort(uint256 size) returns()
-func (_QuickSort *QuickSortTransactorSession) DebugSort(size *big.Int) (*types.Transaction, error) {
-	return _QuickSort.Contract.DebugSort(&_QuickSort.TransactOpts, size)
+// Solidity: function debugSort(uint256 size, string id) returns()
+func (_QuickSort *QuickSortTransactorSession) DebugSort(size *big.Int, id string) (*types.Transaction, error) {
+	return _QuickSort.Contract.DebugSort(&_QuickSort.TransactOpts, size, id)
 }
 
 // PrintAllData is a paid mutator transaction binding the contract method 0xd969f9f4.
@@ -252,25 +252,25 @@ func (_QuickSort *QuickSortTransactorSession) PrintAllData() (*types.Transaction
 	return _QuickSort.Contract.PrintAllData(&_QuickSort.TransactOpts)
 }
 
-// Sort is a paid mutator transaction binding the contract method 0xfe913865.
+// Sort is a paid mutator transaction binding the contract method 0x89b8e04c.
 //
-// Solidity: function sort(uint256 size) returns()
-func (_QuickSort *QuickSortTransactor) Sort(opts *bind.TransactOpts, size *big.Int) (*types.Transaction, error) {
-	return _QuickSort.contract.Transact(opts, "sort", size)
+// Solidity: function sort(uint256 size, string id) returns()
+func (_QuickSort *QuickSortTransactor) Sort(opts *bind.TransactOpts, size *big.Int, id string) (*types.Transaction, error) {
+	return _QuickSort.contract.Transact(opts, "sort", size, id)
 }
 
-// Sort is a paid mutator transaction binding the contract method 0xfe913865.
+// Sort is a paid mutator transaction binding the contract method 0x89b8e04c.
 //
-// Solidity: function sort(uint256 size) returns()
-func (_QuickSort *QuickSortSession) Sort(size *big.Int) (*types.Transaction, error) {
-	return _QuickSort.Contract.Sort(&_QuickSort.TransactOpts, size)
+// Solidity: function sort(uint256 size, string id) returns()
+func (_QuickSort *QuickSortSession) Sort(size *big.Int, id string) (*types.Transaction, error) {
+	return _QuickSort.Contract.Sort(&_QuickSort.TransactOpts, size, id)
 }
 
-// Sort is a paid mutator transaction binding the contract method 0xfe913865.
+// Sort is a paid mutator transaction binding the contract method 0x89b8e04c.
 //
-// Solidity: function sort(uint256 size) returns()
-func (_QuickSort *QuickSortTransactorSession) Sort(size *big.Int) (*types.Transaction, error) {
-	return _QuickSort.Contract.Sort(&_QuickSort.TransactOpts, size)
+// Solidity: function sort(uint256 size, string id) returns()
+func (_QuickSort *QuickSortTransactorSession) Sort(size *big.Int, id string) (*types.Transaction, error) {
+	return _QuickSort.Contract.Sort(&_QuickSort.TransactOpts, size, id)
 }
 
 // QuickSortPrintArrayIterator is returned from FilterPrintArray and is used to iterate over the raw logs and unpacked data for PrintArray events raised by the QuickSort contract.
@@ -538,6 +538,278 @@ func (_QuickSort *QuickSortFilterer) WatchPrintArrayInfo(opts *bind.WatchOpts, s
 func (_QuickSort *QuickSortFilterer) ParsePrintArrayInfo(log types.Log) (*QuickSortPrintArrayInfo, error) {
 	event := new(QuickSortPrintArrayInfo)
 	if err := _QuickSort.contract.UnpackLog(event, "PrintArrayInfo", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// QuickSortPrintConfirmationIterator is returned from FilterPrintConfirmation and is used to iterate over the raw logs and unpacked data for PrintConfirmation events raised by the QuickSort contract.
+type QuickSortPrintConfirmationIterator struct {
+	Event *QuickSortPrintConfirmation // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *QuickSortPrintConfirmationIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(QuickSortPrintConfirmation)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(QuickSortPrintConfirmation)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *QuickSortPrintConfirmationIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *QuickSortPrintConfirmationIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// QuickSortPrintConfirmation represents a PrintConfirmation event raised by the QuickSort contract.
+type QuickSortPrintConfirmation struct {
+	Arg0 string
+	Arg1 [32]byte
+	Raw  types.Log // Blockchain specific contextual infos
+}
+
+// FilterPrintConfirmation is a free log retrieval operation binding the contract event 0xf509cf6649381810c1e71003d0b015833d7434b9e56cf8807d83a949d88ced5d.
+//
+// Solidity: event PrintConfirmation(string arg0, bytes32 arg1)
+func (_QuickSort *QuickSortFilterer) FilterPrintConfirmation(opts *bind.FilterOpts) (*QuickSortPrintConfirmationIterator, error) {
+
+	logs, sub, err := _QuickSort.contract.FilterLogs(opts, "PrintConfirmation")
+	if err != nil {
+		return nil, err
+	}
+	return &QuickSortPrintConfirmationIterator{contract: _QuickSort.contract, event: "PrintConfirmation", logs: logs, sub: sub}, nil
+}
+
+// WatchPrintConfirmation is a free log subscription operation binding the contract event 0xf509cf6649381810c1e71003d0b015833d7434b9e56cf8807d83a949d88ced5d.
+//
+// Solidity: event PrintConfirmation(string arg0, bytes32 arg1)
+func (_QuickSort *QuickSortFilterer) WatchPrintConfirmation(opts *bind.WatchOpts, sink chan<- *QuickSortPrintConfirmation) (event.Subscription, error) {
+
+	logs, sub, err := _QuickSort.contract.WatchLogs(opts, "PrintConfirmation")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(QuickSortPrintConfirmation)
+				if err := _QuickSort.contract.UnpackLog(event, "PrintConfirmation", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParsePrintConfirmation is a log parse operation binding the contract event 0xf509cf6649381810c1e71003d0b015833d7434b9e56cf8807d83a949d88ced5d.
+//
+// Solidity: event PrintConfirmation(string arg0, bytes32 arg1)
+func (_QuickSort *QuickSortFilterer) ParsePrintConfirmation(log types.Log) (*QuickSortPrintConfirmation, error) {
+	event := new(QuickSortPrintConfirmation)
+	if err := _QuickSort.contract.UnpackLog(event, "PrintConfirmation", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// QuickSortPrintConfirmationDebugIterator is returned from FilterPrintConfirmationDebug and is used to iterate over the raw logs and unpacked data for PrintConfirmationDebug events raised by the QuickSort contract.
+type QuickSortPrintConfirmationDebugIterator struct {
+	Event *QuickSortPrintConfirmationDebug // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *QuickSortPrintConfirmationDebugIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(QuickSortPrintConfirmationDebug)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(QuickSortPrintConfirmationDebug)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *QuickSortPrintConfirmationDebugIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *QuickSortPrintConfirmationDebugIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// QuickSortPrintConfirmationDebug represents a PrintConfirmationDebug event raised by the QuickSort contract.
+type QuickSortPrintConfirmationDebug struct {
+	Arg0 string
+	Arg1 *big.Int
+	Arg2 [32]byte
+	Arg3 []*big.Int
+	Raw  types.Log // Blockchain specific contextual infos
+}
+
+// FilterPrintConfirmationDebug is a free log retrieval operation binding the contract event 0xf4788eb76bf7c55c259749df1e9b259a9cfec4982d8b48f926db15d10f51d64c.
+//
+// Solidity: event PrintConfirmationDebug(string arg0, uint256 arg1, bytes32 arg2, uint256[] arg3)
+func (_QuickSort *QuickSortFilterer) FilterPrintConfirmationDebug(opts *bind.FilterOpts) (*QuickSortPrintConfirmationDebugIterator, error) {
+
+	logs, sub, err := _QuickSort.contract.FilterLogs(opts, "PrintConfirmationDebug")
+	if err != nil {
+		return nil, err
+	}
+	return &QuickSortPrintConfirmationDebugIterator{contract: _QuickSort.contract, event: "PrintConfirmationDebug", logs: logs, sub: sub}, nil
+}
+
+// WatchPrintConfirmationDebug is a free log subscription operation binding the contract event 0xf4788eb76bf7c55c259749df1e9b259a9cfec4982d8b48f926db15d10f51d64c.
+//
+// Solidity: event PrintConfirmationDebug(string arg0, uint256 arg1, bytes32 arg2, uint256[] arg3)
+func (_QuickSort *QuickSortFilterer) WatchPrintConfirmationDebug(opts *bind.WatchOpts, sink chan<- *QuickSortPrintConfirmationDebug) (event.Subscription, error) {
+
+	logs, sub, err := _QuickSort.contract.WatchLogs(opts, "PrintConfirmationDebug")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(QuickSortPrintConfirmationDebug)
+				if err := _QuickSort.contract.UnpackLog(event, "PrintConfirmationDebug", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParsePrintConfirmationDebug is a log parse operation binding the contract event 0xf4788eb76bf7c55c259749df1e9b259a9cfec4982d8b48f926db15d10f51d64c.
+//
+// Solidity: event PrintConfirmationDebug(string arg0, uint256 arg1, bytes32 arg2, uint256[] arg3)
+func (_QuickSort *QuickSortFilterer) ParsePrintConfirmationDebug(log types.Log) (*QuickSortPrintConfirmationDebug, error) {
+	event := new(QuickSortPrintConfirmationDebug)
+	if err := _QuickSort.contract.UnpackLog(event, "PrintConfirmationDebug", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
