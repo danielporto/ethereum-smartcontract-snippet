@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	"math"
 	"sort"
 	"sync"
 	"sync/atomic"
@@ -110,27 +111,133 @@ func (s *StatsStorage) GetAverage(percent bool) int64 {
 	return latency / pos
 }
 
-func (s *StatsStorage) GetMedian(limit bool) int64 {
-	return 0
+func (s *StatsStorage) GetMedian(percent bool) int64 {
+	latencies := *s.GetLatencyValues()
+	latency := int64(0)
+	consumedSamples := int64(0)
+	limit := int64(0)
 
+	if percent {
+		//default is take 10%, and thus compute the 90%
+		limit = s.total_samples / 10
+	}
+
+	median_pos := (s.total_samples - limit)/2 // small approximation error, no big deal
+
+	//find the position in the flat array
+	for i := 0 ; i < len(latencies); i++ {
+		latencyValue := latencies[i]
+		latencySampleQty, _ := s.storage.Load(latencyValue)
+		latencySamples := *latencySampleQty.(*int64)
+
+		if consumedSamples + latencySamples >= median_pos {
+			//qty := consumedSamples + latencySamples - pos
+			// the latency of median is repeated in this block, just return the latency
+			latency = latencyValue
+			break
+		} else {
+			consumedSamples += latencySamples
+		}
+	} //for
+	return latency
 }
 
-func (s *StatsStorage) GetSTD(limit bool) int64 {
-	return 0
+func (s *StatsStorage) GetSTD(percent bool) float64 {
+	if s.total_samples <= 1 {
+		return 0;
+	}
 
+	latencies := *s.GetLatencyValues()
+	limit := int64(0)
+	if percent {
+		//default is take 10%, and thus compute the 90%
+		limit = s.total_samples / 10
+	}
+	consumedSamples := int64(0)
+	pos := s.total_samples - limit
+	med := s.GetAverage(percent)
+	quad := int64(0)
+
+	for i := 0 ; i < len(latencies); i++ {
+		latencyValue := latencies[i]
+		latencySampleQty, _ := s.storage.Load(latencyValue)
+		latencySamples := *latencySampleQty.(*int64)
+
+		if consumedSamples + latencySamples >= pos {
+			qty := consumedSamples + latencySamples - pos
+			consumedSamples += latencySamples - qty
+			var j int64
+			for j = 0; j < latencySamples - qty; j++ {
+				quad = quad + latencyValue * latencyValue
+			}
+			break
+		} else {
+			consumedSamples += latencySamples
+			var j int64
+			for j = 0; j < latencySamples; j++ {
+				quad = quad + latencyValue * latencyValue
+			}
+		}
+	} //for
+	variance :=  float64(quad - (consumedSamples * (med * med))) / float64(consumedSamples - 1)
+	return math.Sqrt(variance)
 }
 
-func (s *StatsStorage) GetMax(limit bool) int64 {
-	return 0
+func (s *StatsStorage) GetMax(percent bool) int64 {
+	latencies := *s.GetLatencyValues()
+	max_latency := int64(0)
+	consumedSamples := int64(0)
+	limit := int64(0)
 
+	if percent {
+		//default is take 10%, and thus compute the 90%
+		limit = s.total_samples / 10
+	} else {
+		return s.max_latency
+	}
+
+	pos := s.total_samples - limit
+	//find the position in the flat array
+	for i := 0 ; i < len(latencies); i++ {
+		latencyValue := latencies[i]
+		latencySampleQty, _ := s.storage.Load(latencyValue)
+		latencySamples := *latencySampleQty.(*int64)
+
+		if consumedSamples + latencySamples >= pos { //may have found the max latency
+			// the latency of max is repeated in this block, just return the latency
+
+			//qty := consumedSamples + latencySamples - pos
+			max_latency = latencyValue
+			break
+		} else {
+			consumedSamples += latencySamples
+		}
+	} //for
+	return max_latency
 }
 
-func (s *StatsStorage) GetPercentile(limit bool) int64 {
-	return 0
-}
+func (s *StatsStorage) GetPercentile(percentile float32) int64 {
+	latencies := *s.GetLatencyValues()
+	consumedSamples := int64(0)
+	pos := int64(float64(s.total_samples) * float64(percentile))
+	latency := int64(0)
 
-func (s *StatsStorage) GetLatencies(limit bool) int64 {
-	return 0
+	//find the position in the flat array
+	for i := 0 ; i < len(latencies); i++ {
+		latencyValue := latencies[i]
+		latencySampleQty, _ := s.storage.Load(latencyValue)
+		latencySamples := *latencySampleQty.(*int64)
+
+		if consumedSamples + latencySamples >= pos {
+			//qty := consumedSamples + latencySamples - pos
+			// the latency of percentile is repeated in this block, just return the latency
+			latency = latencyValue
+			break
+		} else {
+			consumedSamples += latencySamples
+		}
+	} //for
+	return latency
 }
 
 func (s *StatsStorage) PrintStatsMap() {
