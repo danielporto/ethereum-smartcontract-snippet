@@ -163,7 +163,7 @@ func watchPrintArray(client *ethclient.Client, contractAddr common.Address, stop
 	}
 }
 
-func watchPrintConfirmation(client *ethclient.Client, contractAddr common.Address, stop chan struct{}, reqNanotimeMap *sync.Map, stat *StatsStorage) {
+func watchPrintConfirmation(client *ethclient.Client, contractAddr common.Address, stop chan struct{}, requestTimeMap *sync.Map, stat *StatsStorage) {
 	eventName := "PrintConfirmation"
 	// get a reference to the contract abi
 	parsed, err := abi.JSON(strings.NewReader(contracts.QuickSortMetaData.ABI))
@@ -184,14 +184,14 @@ func watchPrintConfirmation(client *ethclient.Client, contractAddr common.Addres
 	for {
 		select {
 		case logentry := <-logs:
-			tFin := time.Now().UnixNano() // get the timestamp in nanosseconds
+			tFin := time.Now().UnixNano() / latency_factor // check latency_factor_unity
 			event := new(contracts.QuickSortPrintConfirmation)
 			if err := bc.UnpackLog(event, eventName, logentry); err != nil {
 				LogError("Error decoding log event:", logentry, err)
 			}
 			//Log("[%v Event]: trx_id=%v  ; trx_hash: %v", eventName, event.Arg0, hex.EncodeToString(event.Arg1[:]))
 			//Log("{ \"event\": \"%v\", \"trx_id\": \"%v\", \"trx_hash\": \"%v\" }", eventName, event.Arg0, hex.EncodeToString(event.Arg1[:]))
-			tIni, ok := reqNanotimeMap.LoadAndDelete(event.Arg0) // the value is no longer needed, release memory
+			tIni, ok := requestTimeMap.LoadAndDelete(event.Arg0) // the value is no longer needed, release memory
 			if !ok {
 				// reply was received without a request. breaks causality.
 				LogError("Reply was received without a request. breaks causality:"+ "{ \"event\": \"%v\", \"trx_id\": \"%v\", \"trx_hash\": \"%v\" }", eventName, event.Arg0, hex.EncodeToString(event.Arg1[:]))
@@ -201,9 +201,9 @@ func watchPrintConfirmation(client *ethclient.Client, contractAddr common.Addres
 				LogError("Unable to convert timestamp type, ignoring entry")
 				continue
 			}
-			lat := tFin - tIniTyped
-			LogDebug("{ \"event\": \"%v\", \"trx_id\": \"%v\", \"trx_hash\": \"%v\", latency: %v }", eventName, event.Arg0, hex.EncodeToString(event.Arg1[:]), lat)
-			stat.StoreLatencySample(lat)
+			latency_time_units := (tFin - tIniTyped)
+			LogDebug("{ \"event\": \"%v\", \"trx_id\": \"%v\", \"trx_hash\": \"%v\", latency: %v }", eventName, event.Arg0, hex.EncodeToString(event.Arg1[:]), latency_time_units)
+			stat.StoreLatencySample(latency_time_units)
 		case err := <-sub.Err():
 			LogError("Error received in the subscription channel:", err)
 		case <-stop:

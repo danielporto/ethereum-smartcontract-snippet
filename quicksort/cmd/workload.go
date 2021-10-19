@@ -304,12 +304,12 @@ func quicksort(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.Qu
 		}
 
 		id := fmt.Sprintf("%v_tx_%v", client_id, nonce)
-		tIni := time.Now().UnixNano() // get the timestamp in nanosseconds
+		tIni_us := time.Now().UnixNano() / latency_factor // get the timestamp in microsseconds
 		tx, err := sort(auth, big.NewInt(int64(payloadsize)), id)
 		if err != nil {
 			LogFatal("Failed to call sort transaction method of quicksort contract. Check the Gas limit [%v ]for this transaction. Detail: %v", auth.GasLimit, err)
 		}
-		requestNanotimeMap.Store(id,tIni) //stores the timestamp in which the request was made (this will be updated by the event function)
+		requestNanotimeMap.Store(id, tIni_us) //stores the timestamp in which the request was made (this will be updated by the event function)
 
 		total_transactions++
 		LogDebug("nonce %v, tx sent: %s\n", nonce, tx.Hash().Hex())

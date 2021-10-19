@@ -40,9 +40,11 @@ var duration int      //used for duration of experiment
 var contract string   // used for debuging print
 var threads int       // used for workload
 var verbosity string  //set log verbosity
-var client_id string // client identifier to match transaction response
+var client_id string  // client identifier to match transaction response
 var debug bool
 
+var latency_factor_unity string
+var latency_factor int64
 
 func Log(message string, a ...interface{}) {
 	var m string
@@ -50,9 +52,9 @@ func Log(message string, a ...interface{}) {
 
 	now := time.Now()
 	location, _ := time.LoadLocation("Europe/Lisbon")
-	now_ts := now.UnixNano() / 1_000_000
+	now_ts_ms := now.UnixNano() / 1_000_000
 	now_date := now.In(location).Format("2006-01-02 15:04:05")
-	fmt.Printf("%v|%v [CpuHeavyClient]: %v\n",now_date, now_ts, m )
+	fmt.Printf("%v|%v [CpuHeavyClient]: %v\n", now_date, now_ts_ms, m)
 }
 
 func LogWtag(tag, message string, a ...interface{}) {
@@ -61,21 +63,21 @@ func LogWtag(tag, message string, a ...interface{}) {
 
 	now := time.Now()
 	location, _ := time.LoadLocation("Europe/Lisbon")
-	now_ts := now.UnixNano() / 1_000_000
+	now_ts_ms := now.UnixNano() / 1_000_000
 	now_date := now.In(location).Format("2006-01-02 15:04:05")
-	fmt.Printf("%v|%v [CpuHeavyClient]: % - %v\n",tag,now_date,now_ts, m )
+	fmt.Printf("%v|%v [CpuHeavyClient]: %v - %v\n", now_date, now_ts_ms, tag, m)
 }
 
-func LogFatal(message string, a ...interface{}){
+func LogFatal(message string, a ...interface{}) {
 	LogWtag("Fatal Error", message, a...)
 	os.Exit(-1)
 }
-func LogError(message string, a ...interface{}){
+func LogError(message string, a ...interface{}) {
 	LogWtag("Error", message, a...)
 }
 
-func LogDebug(message string, a ...interface{}){
-	if ! debug {
+func LogDebug(message string, a ...interface{}) {
+	if !debug {
 		return
 	}
 	LogWtag("Debug", message, a...)
@@ -95,14 +97,23 @@ WARNING - in case of using multiple instances of this client instead of thread, 
 to prevent Nonce collision!!!!
 `,
 
-
-
 	//././quicksort workload -o sort -s 10  -c 3  --host localhost --port 7545 --key "6a32c1b4b7da9ca8bf3dfb9631871e6953ec97532afc1dcfd640d317bae24169"
 
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		if strings.TrimSpace(strings.ToUpper(verbosity)) == "DEBUG"{
+		if strings.TrimSpace(strings.ToUpper(verbosity)) == "DEBUG" {
 			debug = true
 			LogDebug("Debug mode enabled")
+
+		}
+
+
+		switch latency_factor_unity {
+			case "microseconds":
+				latency_factor = 1_000
+				Log("Latency for request/reply are computed in  microseconds ")
+			case "milliseconds":
+				latency_factor = 1_000_000
+				Log("Latency for request/reply are computed in  milliseconds ")
 		}
 	},
 }
@@ -137,6 +148,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&key, "key", "k", "", "key of a network node")
 	rootCmd.MarkPersistentFlagRequired("key")
 	rootCmd.PersistentFlags().Int32VarP(&payloadsize, "size", "s", 100, "Size of the array to sort (increase the load)")
+	rootCmd.PersistentFlags().StringVarP(&latency_factor_unity, "req_latency_unity", "", "microseconds", "latency between the request and reply: microseconds/milliseconds")
 }
 
 // initConfig reads in config file and ENV variables if set.

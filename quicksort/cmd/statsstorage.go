@@ -176,7 +176,7 @@ func (s *StatsStorage) GetSTD(percent bool) float64 {
 	consumedSamples := int64(0)
 	pos := size - limit
 	if pos == 0 { pos = 1}
-	med := s.GetAverage(percent)
+	avg := s.GetAverage(percent)
 	quad := int64(0)
 
 	for i := 0 ; i < len(latencies); i++ {
@@ -184,12 +184,14 @@ func (s *StatsStorage) GetSTD(percent bool) float64 {
 		latencySampleQty, _ := s.storage.Load(latencyValue)
 		latencySamples := *latencySampleQty.(*int64)
 
+
 		if consumedSamples + latencySamples >= pos {
 			qty := consumedSamples + latencySamples - pos
 			consumedSamples += latencySamples - qty
 			var j int64
 			for j = 0; j < latencySamples - qty; j++ {
 				quad = quad + latencyValue * latencyValue
+				//fmt.Println(latencyValue, latencySamples, latencyValue * latencyValue, quad)
 			}
 			break
 		} else {
@@ -197,10 +199,14 @@ func (s *StatsStorage) GetSTD(percent bool) float64 {
 			var j int64
 			for j = 0; j < latencySamples; j++ {
 				quad = quad + latencyValue * latencyValue
+				//fmt.Println(latencyValue, latencySamples, latencyValue * latencyValue, quad)
 			}
 		}
 	} //for
-	variance :=  float64(quad - (consumedSamples * (med * med))) / float64(consumedSamples - 1)
+
+	//fmt.Println(quad)
+	//fmt.Println(consumedSamples * avg*avg)
+	variance :=  float64(quad - (consumedSamples * (avg*avg)) / (consumedSamples - 1))
 	return math.Sqrt(variance)
 }
 
