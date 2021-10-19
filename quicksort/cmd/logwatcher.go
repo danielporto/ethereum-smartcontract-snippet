@@ -207,7 +207,7 @@ func watchPrintConfirmation(client *ethclient.Client, contractAddr common.Addres
 				continue
 			}
 			lat := tFin - tIniTyped
-			log.Infof("{ \"event\": \"%v\", \"trx_id\": \"%v\", \"trx_hash\": \"%v\", latency: %v }", eventName, event.Arg0, hex.EncodeToString(event.Arg1[:]), lat)
+			log.Debugf("{ \"event\": \"%v\", \"trx_id\": \"%v\", \"trx_hash\": \"%v\", latency: %v }", eventName, event.Arg0, hex.EncodeToString(event.Arg1[:]), lat)
 			stat.StoreLatencySample(lat)
 		case err := <-sub.Err():
 			log.Error("Error received in the subscription channel:", err)
