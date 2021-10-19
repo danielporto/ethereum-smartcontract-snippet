@@ -307,7 +307,7 @@ func quicksort(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.Qu
 		tIni := time.Now().UnixNano() // get the timestamp in nanosseconds
 		tx, err := sort(auth, big.NewInt(int64(payloadsize)), id)
 		if err != nil {
-			LogFatal("Failed to call sort transaction method of quicksort contract. Check the gaslimit for this transaction:", auth.GasLimit, " err:", err)
+			LogFatal("Failed to call sort transaction method of quicksort contract. Check the Gas limit [%v ]for this transaction. Detail: %v", auth.GasLimit, err)
 		}
 		requestNanotimeMap.Store(id,tIni) //stores the timestamp in which the request was made (this will be updated by the event function)
 

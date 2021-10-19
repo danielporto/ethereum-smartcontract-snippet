@@ -102,7 +102,7 @@ func deployQuickSort(key, url string) (string, uint64, *big.Int) {
 
 	address, tx, instance, err := contracts.DeployQuickSort(auth, conn)
 	if err != nil {
-		LogFatal("Error deploying quicksort contract. Check the gaslimit for this transaction (hardcoded):", auth.GasLimit, " err:", err)
+		LogFatal("Error deploying quicksort contract. Check the Gas limit [%v] for this transaction. Detail: %v", auth.GasLimit, err)
 	}
 
 	// check receipt
