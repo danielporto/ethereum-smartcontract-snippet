@@ -18,8 +18,8 @@ package cmd
 import (
 	"fmt"
 	"os"
-
-	log "github.com/sirupsen/logrus"
+	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -41,6 +41,45 @@ var contract string   // used for debuging print
 var threads int       // used for workload
 var verbosity string  //set log verbosity
 var client_id string // client identifier to match transaction response
+var debug bool
+
+
+func Log(message string, a ...interface{}) {
+	var m string
+	m = fmt.Sprintf(message, a...)
+
+	now := time.Now()
+	location, _ := time.LoadLocation("Europe/Lisbon")
+	now_ts := now.UnixNano() / 1_000_000
+	now_date := now.In(location).Format("2006-01-02 15:04:05")
+	fmt.Printf("%v|%v [CpuHeavyClient]: %v\n",now_date, now_ts, m )
+}
+
+func LogWtag(tag, message string, a ...interface{}) {
+	var m string
+	m = fmt.Sprintf(message, a...)
+
+	now := time.Now()
+	location, _ := time.LoadLocation("Europe/Lisbon")
+	now_ts := now.UnixNano() / 1_000_000
+	now_date := now.In(location).Format("2006-01-02 15:04:05")
+	fmt.Printf("%v|%v [CpuHeavyClient]: % - %v\n",tag,now_date,now_ts, m )
+}
+
+func LogFatal(message string, a ...interface{}){
+	LogWtag("Fatal Error", message, a...)
+	os.Exit(-1)
+}
+func LogError(message string, a ...interface{}){
+	LogWtag("Error", message, a...)
+}
+
+func LogDebug(message string, a ...interface{}){
+	if ! debug {
+		return
+	}
+	LogWtag("Debug", message, a...)
+}
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -61,12 +100,10 @@ to prevent Nonce collision!!!!
 	//././quicksort workload -o sort -s 10  -c 3  --host localhost --port 7545 --key "6a32c1b4b7da9ca8bf3dfb9631871e6953ec97532afc1dcfd640d317bae24169"
 
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		lvl, err := log.ParseLevel(verbosity)
-		if err != nil {
-			log.Fatal("Invalid log level", err)
+		if strings.TrimSpace(strings.ToUpper(verbosity)) == "DEBUG"{
+			debug = true
+			LogDebug("Debug mode enabled")
 		}
-		log.SetLevel(lvl)
-		log.Debugf("Debug mode enabled")
 	},
 }
 

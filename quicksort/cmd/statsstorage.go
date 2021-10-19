@@ -36,7 +36,7 @@ func (s *StatsStorage) StoreLatencySample(latency int64) bool {
 }
 
 func (s *StatsStorage) ForceRecomputeArray()  {
-	//log.Info("Force recompute array called.")
+	//Log("Force recompute array called.")
 	s.latencies = nil
 	s.latencies_arflat_size = 0
 
@@ -47,7 +47,7 @@ func (s *StatsStorage) ForceRecomputeArray()  {
 func (s *StatsStorage) GetLatencyValuesFlattened() *[]int64 {
 	if s.latencies != nil {
 		//sorted previously and still valid
-		//log.Infof("Previous latency slice is still valid. return")
+		//Log("Previous latency slice is still valid. return")
 		return &s.latencies
 	}
 
@@ -70,16 +70,16 @@ func (s *StatsStorage) GetLatencyValues() (*[]int64, int64) {
 
 	if s.latencies != nil {
 		//sorted previously and still valid
-		//log.Infof("Previous latency slice is still valid. return")
+		//Log("Previous latency slice is still valid. return")
 		return &s.latencies, s.latencies_arflat_size
 	}
-	//log.Infof("Recompute latency slice")
+	//Log("Recompute latency slice")
 	s.latencies_arflat_size = 0 // rebuild
 	// create the slice
 	s.latencies = []int64{}
 	//iterate over the map, read the latencies and store them into the slice
 	s.storage.Range(func(key, value interface{}) bool {
-		//log.Infof("Appending new value to the slice: %v\n", key.(int64))
+		//Log("Appending new value to the slice: %v\n", key.(int64))
 		s.latencies = append(s.latencies, key.(int64))
 		s.latencies_arflat_size += *value.(*int64)
 		return true

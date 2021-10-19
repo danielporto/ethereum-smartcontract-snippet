@@ -22,14 +22,8 @@ import (
 	"math/big"
 	"strconv"
 
-	log "github.com/sirupsen/logrus"
-
-	// "time"
-
 	"github.com/danielporto/ethereum-smartcontract-snippet/quicksort/contracts"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-
-	// "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
@@ -48,7 +42,7 @@ Example:
 		fmt.Println("deploy called")
 		p, err := strconv.Atoi(port)
 		if err != nil {
-			log.Fatal("Error converting the socket port:", port, err)
+			LogFatal("Error converting the socket port:", port, err)
 		}
 		url := "ws://" + host + ":" + strconv.Itoa(p)
 		deployQuickSort(key, url)
@@ -70,33 +64,33 @@ func init() {
 }
 
 func deployQuickSort(key, url string) (string, uint64, *big.Int) {
-	log.Println("Connecting to ethereum network...")
+	Log("Connecting to ethereum network...")
 	conn, err := ethclient.Dial(url)
 	if err != nil {
-		log.Fatal("Failed to connect to ethereum node", err)
+		LogFatal("Failed to connect to ethereum node", err)
 	}
 
 	privateKey, err := crypto.HexToECDSA(key)
 	if err != nil {
-		log.Fatal("Error converting the private key from Hex to ECDSA", err)
+		LogFatal("Error converting the private key from Hex to ECDSA", err)
 	}
 
 	publicKey := privateKey.Public()
 	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
 	if !ok {
-		log.Fatal("Error casting public key to ECDSA")
+		LogFatal("Error casting public key to ECDSA")
 	}
 
 	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
 	nonce, err := conn.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
-		log.Fatal("Error while getting a new nonce", err)
+		LogFatal("Error while getting a new nonce", err)
 	}
 	fmt.Printf("Nonce: %v\n", nonce)
 
 	gasPrice, err := conn.SuggestGasPrice(context.Background())
 	if err != nil {
-		log.Fatal("Error while trying to get the gas price", err)
+		LogFatal("Error while trying to get the gas price", err)
 	}
 	fmt.Println("Gas price in wei (10^-18ether):", gasPrice)
 
@@ -108,12 +102,12 @@ func deployQuickSort(key, url string) (string, uint64, *big.Int) {
 
 	address, tx, instance, err := contracts.DeployQuickSort(auth, conn)
 	if err != nil {
-		log.Fatal("Error deploying quicksort contract. Check the gaslimit for this transaction (hardcoded):", auth.GasLimit, " err:", err)
+		LogFatal("Error deploying quicksort contract. Check the gaslimit for this transaction (hardcoded):", auth.GasLimit, " err:", err)
 	}
 
 	// check receipt
 	// if checkReceipt(conn, tx, 3) == false {
-	// 	log.Fatal("Error: impossible to verify the transaction: ", tx)
+	// 	LogFatal("Error: impossible to verify the transaction: ", tx)
 	// }
 
 	fmt.Println("Transaction address:", tx.Hash().Hex())

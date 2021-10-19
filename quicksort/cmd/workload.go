@@ -24,8 +24,6 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/danielporto/ethereum-smartcontract-snippet/quicksort/contracts"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -53,20 +51,20 @@ var workloadCmd = &cobra.Command{
 Then, call several operations of that contract. `,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		log.Infof("Workload operation '%v'", operation)
-		log.Infof("Gas price limit for the transaction: %v wei", trxgaslimit)
-		log.Infof("Max rate to issue operations (suggested tps) %v tps", maxrate)
+		Log("Workload operation '%v'", operation)
+		Log("Gas price limit for the transaction: %v wei", trxgaslimit)
+		Log("Max rate to issue operations (suggested tps) %v tps", maxrate)
 		switch operation {
 		case "deploy":
 			workloadDeploy()
 		case "sort":
-			log.Infof("Size of the array to sort: %v", payloadsize)
+			Log("Size of the array to sort: %v", payloadsize)
 			workloadQuicksort()
 		case "mixed":
-			log.Infof("Size of the array to sort: %v", payloadsize)
+			Log("Size of the array to sort: %v", payloadsize)
 			workloadMixed()
 		default:
-			log.Fatal("Operation not supported:", operation)
+			LogFatal("Operation not supported:", operation)
 
 		}
 	},
@@ -113,15 +111,15 @@ func generateNonce(init uint64, count, duration int, nonces chan<- uint64) {
 func generateNonceAtRate(client *ethclient.Client, fromAddress common.Address, count, duration int, nonces chan<- uint64, rate int) {
 	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
-		log.Fatal("Impossible to get a nonce for account", err)
+		LogFatal("Impossible to get a nonce for account", err)
 	}
 
 	if rate <= 0 {
-		log.Fatal("Rate must be greater than 0")
+		LogFatal("Rate must be greater than 0")
 	}
 
 	rl := ratelimit.New(rate) // per second
-	log.Infof("[Nonce]: Generate nonces starting from %v at a rate of: %v ops/s", nonce, rate)
+	Log("[Nonce]: Generate nonces starting from %v at a rate of: %v ops/s", nonce, rate)
 
 	if duration > 0 {
 		lastTimelinePrint := int64(-1)
@@ -136,7 +134,7 @@ func generateNonceAtRate(client *ethclient.Client, fromAddress common.Address, c
 			if timeline {
 				if sendInstant.UnixNano() -lastTimelinePrint > 1_000_000_000 {
 					lastTimelinePrint = sendInstant.UnixNano()
-					log.Info(stats.ReportStats())
+					Log(stats.ReportStats())
 				}
 			}
 		}
@@ -159,16 +157,16 @@ func watchContractEvents(contractAddr common.Address, done chan struct{}) {
 	defer close(stop)
 	p, err := strconv.Atoi(port)
 	if err != nil {
-		log.Fatal("Error converting the socket port:", port, err)
+		LogFatal("Error converting the socket port:", port, err)
 	}
 	wsurl := "ws://" + host + ":" + strconv.Itoa(p)
 
 	client, err := ethclient.Dial(wsurl)
 	if err != nil {
-		log.Fatal("Error opening websocket connection to host.", wsurl, err)
+		LogFatal("Error opening websocket connection to host.", wsurl, err)
 	}
-	log.Infof("Operations report checkpoint: %v ops", checkpoint)
-	log.Infof("Logging thread: Subscribing to contract events: %v", wsurl)
+	Log("Operations report checkpoint: %v ops", checkpoint)
+	Log("Logging thread: Subscribing to contract events: %v", wsurl)
 	// initialize the monitor threads for each event
 	go watchPrintArray(client, contractAddr, stop)
 	go watchPrintArrayInfo(client, contractAddr, stop)
@@ -177,10 +175,10 @@ func watchContractEvents(contractAddr common.Address, done chan struct{}) {
 	go watchPrintConfirmation(client, contractAddr, stop, &requestNanotimeMap, &stats)
 	go watchPrintConfirmationDebug(client, contractAddr, stop)
 
-	log.Debug("Logging thread: Waiting for logs to be closed")
+	LogDebug("Logging thread: Waiting for logs to be closed")
 	// wait for the signal to stop
 	<-done
-	log.Info("Logging thread: Teardown subscription to contract events.")
+	Log("Logging thread: Teardown subscription to contract events.")
 
 	//stop all 4 logging threads
 	<-stop
@@ -189,7 +187,7 @@ func watchContractEvents(contractAddr common.Address, done chan struct{}) {
 	<-stop
 	<-stop
 	<-stop
-	log.Info("Logging thread: All event watchers are closed.")
+	Log("Logging thread: All event watchers are closed.")
 }
 
 /**********************************************************************************************************************
@@ -199,7 +197,7 @@ func watchContractEvents(contractAddr common.Address, done chan struct{}) {
 func deploy(pk *ecdsa.PrivateKey, c *ethclient.Client, gasPrice *big.Int, nonces <-chan uint64, wg *sync.WaitGroup, threadid int) {
 	defer wg.Done()
 	total_transactions := 0
-	log.Infof("Thread %v STARTED - issuing deploy contract transactions", threadid)
+	Log("Thread %v STARTED - issuing deploy contract transactions", threadid)
 
 	for nonce := range nonces {
 		auth := bind.NewKeyedTransactor(pk)
@@ -210,16 +208,16 @@ func deploy(pk *ecdsa.PrivateKey, c *ethclient.Client, gasPrice *big.Int, nonces
 
 		address, _, _, err := contracts.DeployQuickSort(auth, c)
 		if err != nil {
-			log.Fatal("Error deploying quicksort contract", err)
+			LogFatal("Error deploying quicksort contract", err)
 		}
 
 		total_transactions++
 		if total_transactions%checkpoint == 0 {
-			log.Infof("Thread %v - deploy transactions issued : %v", threadid, total_transactions)
+			Log("Thread %v - deploy transactions issued : %v", threadid, total_transactions)
 		}
-		log.Debugf("Transaction address: %v\n", address.Hex())
+		LogDebug("Transaction address: %v\n", address.Hex())
 	}
-	log.Infof("Thread %v FINISHED - deploy contract transactions issued : %v", threadid, total_transactions)
+	Log("Thread %v FINISHED - deploy contract transactions issued : %v", threadid, total_transactions)
 
 }
 
@@ -229,12 +227,12 @@ func workloadDeploy() {
 
 	// 1. Initialize a connection
 	url := "ws://" + host + ":" + port
-	log.Info("Running deploy workload")
-	log.Infof("Connecting to ethereum network: %v", url)
+	Log("Running deploy workload")
+	Log("Connecting to ethereum network: %v", url)
 
 	conn, err := ethclient.Dial(url)
 	if err != nil {
-		log.Fatal("Failed to connect to ethereum node", err)
+		LogFatal("Failed to connect to ethereum node", err)
 	}
 
 	// 2. Load credentials
@@ -243,13 +241,13 @@ func workloadDeploy() {
 	// ECDSA (elyptic curve DSA is the standard used by ethereum)
 	privateKey, err := crypto.HexToECDSA(key)
 	if err != nil {
-		log.Fatal("Error converting the private key from Hex to ECDSA", err)
+		LogFatal("Error converting the private key from Hex to ECDSA", err)
 	}
 
 	publicKey := privateKey.Public()
 	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
 	if !ok {
-		log.Fatal("Error casting public key to ECDSA")
+		LogFatal("Error casting public key to ECDSA")
 	}
 
 	//now get the account of that private key
@@ -258,7 +256,7 @@ func workloadDeploy() {
 	//4. configure gasPrice
 	gasPrice, err := conn.SuggestGasPrice(context.Background())
 	if err != nil {
-		log.Fatal("Error while trying to get the gas price: ", err)
+		LogFatal("Error while trying to get the gas price: ", err)
 	}
 
 	go generateNonceAtRate(conn, fromAddress, count, duration, nonceStream, maxrate)
@@ -268,7 +266,7 @@ func workloadDeploy() {
 		go deploy(privateKey, conn, gasPrice, nonceStream, &wg, i)
 	}
 	wg.Wait()
-	log.Info("Experiment FINISHED, wait for the 10 seconds to ensure pending transactions are processed")
+	Log("Experiment FINISHED, wait for the 10 seconds to ensure pending transactions are processed")
 	time.Sleep(10 * time.Second)
 
 }
@@ -281,7 +279,7 @@ func workloadDeploy() {
 func quicksort(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.QuickSort, gasPrice *big.Int, nonces <-chan uint64, wg *sync.WaitGroup, threadid int) {
 	defer wg.Done()
 	total_transactions := 0
-	log.Infof("Thread %v STARTED - issuing quicksort transactions", threadid)
+	Log("Thread %v STARTED - issuing quicksort transactions", threadid)
 
 	var sort func(opts *bind.TransactOpts, size *big.Int, id string) (*types.Transaction, error)
 	// pick the right sort function
@@ -300,7 +298,7 @@ func quicksort(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.Qu
 		auth.GasPrice = gasPrice
 
 		if nonce%uint64(checkpoint) == 0 {
-			log.Infof("Thread %v - quicksort transactions issued : %v", threadid, total_transactions)
+			Log("Thread %v - quicksort transactions issued : %v", threadid, total_transactions)
 			instance.PrintAllData(auth)
 			continue // get another nonce
 		}
@@ -309,15 +307,15 @@ func quicksort(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.Qu
 		tIni := time.Now().UnixNano() // get the timestamp in nanosseconds
 		tx, err := sort(auth, big.NewInt(int64(payloadsize)), id)
 		if err != nil {
-			log.Fatal("Failed to call sort transaction method of quicksort contract. Check the gaslimit for this transaction:", auth.GasLimit, " err:", err)
+			LogFatal("Failed to call sort transaction method of quicksort contract. Check the gaslimit for this transaction:", auth.GasLimit, " err:", err)
 		}
 		requestNanotimeMap.Store(id,tIni) //stores the timestamp in which the request was made (this will be updated by the event function)
 
 		total_transactions++
-		log.Debugf("nonce %v, tx sent: %s\n", nonce, tx.Hash().Hex())
+		LogDebug("nonce %v, tx sent: %s\n", nonce, tx.Hash().Hex())
 
 	}
-	log.Infof("Thread %v FINISHED - quicksort transactions issued : %v", threadid, total_transactions)
+	Log("Thread %v FINISHED - quicksort transactions issued : %v", threadid, total_transactions)
 	stats.PrintStatsMap()
 
 }
@@ -328,12 +326,12 @@ func workloadQuicksort() {
 
 	// 1. Initialize a connection
 	url := "ws://" + host + ":" + port
-	log.Info("Running quicksort workload")
-	log.Infof("Connecting to ethereum network: %v", url)
+	Log("Running quicksort workload")
+	Log("Connecting to ethereum network: %v", url)
 
 	client, err := ethclient.Dial(url)
 	if err != nil {
-		log.Fatal("Failed to connect to ethereum node", err)
+		LogFatal("Failed to connect to ethereum node", err)
 	}
 
 	// 2. Load credentials
@@ -342,13 +340,13 @@ func workloadQuicksort() {
 	// ECDSA (elyptic curve DSA is the standard used by ethereum)
 	privateKey, err := crypto.HexToECDSA(key)
 	if err != nil {
-		log.Fatal("Error converting the private key from Hex to ECDSA", err)
+		LogFatal("Error converting the private key from Hex to ECDSA", err)
 	}
 
 	publicKey := privateKey.Public()
 	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
 	if !ok {
-		log.Fatal("Error casting public key to ECDSA")
+		LogFatal("Error casting public key to ECDSA")
 	}
 
 	//now get the account of that private key
@@ -357,12 +355,12 @@ func workloadQuicksort() {
 	//3. configure nonce (prevent replay attacks with a user specific nonce)
 	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
-		log.Fatal("Impossible to get a nonce for account", err)
+		LogFatal("Impossible to get a nonce for account", err)
 	}
 	//4. configure gasPrice
 	gasPrice, err := client.SuggestGasPrice(context.Background())
 	if err != nil {
-		log.Fatal("Unable to get a gas price", err)
+		LogFatal("Unable to get a gas price", err)
 	}
 
 	// deploy a new contract
@@ -374,9 +372,9 @@ func workloadQuicksort() {
 	auth.GasPrice = gasPrice
 	contractAddr, _, instance, err := contracts.DeployQuickSort(auth, client)
 	if err != nil {
-		log.Fatal("Impossible to initialize a quicksort contract for this workload.", err)
+		LogFatal("Impossible to initialize a quicksort contract for this workload.", err)
 	}
-	log.Info("Wait for the 5 seconds (blocks) while contract is be mined before issuing operations.")
+	Log("Wait for the 5 seconds (blocks) while contract is be mined before issuing operations.")
 	time.Sleep(5 * time.Second)
 
 	doneWatchingLogs := make(chan struct{})
@@ -384,7 +382,7 @@ func workloadQuicksort() {
 	if !disable_events {
 		go watchContractEvents(contractAddr, doneWatchingLogs)
 	} else {
-		log.Infof("Event watchers are disabled.")
+		Log("Event watchers are disabled.")
 	}
 
 	// use the contract to run the quicksort workload
@@ -396,15 +394,15 @@ func workloadQuicksort() {
 	wg.Wait()
 
 	// time's up or #operations has finished
-	log.Info("Experiment FINISHED, wait for the 10 seconds to ensure pending transactions are processed")
+	Log("Experiment FINISHED, wait for the 10 seconds to ensure pending transactions are processed")
 	time.Sleep(10 * time.Second)
 	lastnonce, err := client.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
-		log.Fatal("Impossible to get a nonce for final report", err)
+		LogFatal("Impossible to get a nonce for final report", err)
 	}
 	auth.Nonce = big.NewInt(int64(lastnonce))
 	instance.PrintAllData(auth)
-	log.Info("Wait 10 seconds to receive the final log")
+	Log("Wait 10 seconds to receive the final log")
 	time.Sleep(10 * time.Second)
 	close(doneWatchingLogs)
 	//wait for logs to be closed
@@ -417,7 +415,7 @@ func workloadQuicksort() {
 func mixed(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.QuickSort, gasPrice *big.Int, nonces <-chan uint64, wg *sync.WaitGroup, threadid int) {
 	defer wg.Done()
 	total_transactions := 0
-	log.Infof("Thread %v STARTED - issuing mix deploy/quicksort transactions", threadid)
+	Log("Thread %v STARTED - issuing mix deploy/quicksort transactions", threadid)
 
 	var sort func(opts *bind.TransactOpts, size *big.Int, id string) (*types.Transaction, error)
 	// pick the right sort function
@@ -435,7 +433,7 @@ func mixed(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.QuickS
 		auth.GasPrice = gasPrice
 
 		if nonce%uint64(checkpoint) == 0 {
-			log.Infof("Thread %v - mix deploy/quicksort transactions issued: %v", threadid, total_transactions)
+			Log("Thread %v - mix deploy/quicksort transactions issued: %v", threadid, total_transactions)
 			instance.PrintAllData(auth)
 			total_transactions++
 			continue // get another nonce
@@ -444,21 +442,21 @@ func mixed(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.QuickS
 		if nonce%2 == 0 {
 			address, _, _, err := contracts.DeployQuickSort(auth, c)
 			if err != nil {
-				log.Fatal("Error deploying quicksort contract", err)
+				LogFatal("Error deploying quicksort contract", err)
 			}
-			log.Debugf("Transaction address: %v\n", address.Hex())
+			LogDebug("Transaction address: %v\n", address.Hex())
 		} else {
 			id := fmt.Sprintf("%v_tx_%v",  client_id,nonce)
 			tx, err := sort(auth, big.NewInt(int64(payloadsize)), id)
 			if err != nil {
-				log.Fatal("Failed to call transaction method: ", err)
+				LogFatal("Failed to call transaction method: ", err)
 			}
-			log.Debugf("nonce %v, tx sent: %s\n", nonce, tx.Hash().Hex())
+			LogDebug("nonce %v, tx sent: %s\n", nonce, tx.Hash().Hex())
 		}
 		total_transactions++
 
 	}
-	log.Infof("Thread %v FINISHED - mix quicksort/deploy transactions issued : %v", threadid, total_transactions)
+	Log("Thread %v FINISHED - mix quicksort/deploy transactions issued : %v", threadid, total_transactions)
 
 }
 
@@ -468,12 +466,12 @@ func workloadMixed() {
 
 	// 1. Initialize a connection
 	url := "ws://" + host + ":" + port
-	log.Info("Running mix deploy/quicksort workload")
-	log.Infof("Connecting to ethereum network: %v", url)
+	Log("Running mix deploy/quicksort workload")
+	Log("Connecting to ethereum network: %v", url)
 
 	client, err := ethclient.Dial(url)
 	if err != nil {
-		log.Fatal("Failed to connect to ethereum node", err)
+		LogFatal("Failed to connect to ethereum node", err)
 	}
 
 	// 2. Load credentials
@@ -482,13 +480,13 @@ func workloadMixed() {
 	// ECDSA (elliptic curve DSA is the standard used by ethereum)
 	privateKey, err := crypto.HexToECDSA(key)
 	if err != nil {
-		log.Fatal("Error converting the private key from Hex to ECDSA", err)
+		LogFatal("Error converting the private key from Hex to ECDSA", err)
 	}
 
 	publicKey := privateKey.Public()
 	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
 	if !ok {
-		log.Fatal("Error casting public key to ECDSA")
+		LogFatal("Error casting public key to ECDSA")
 	}
 	//now get the account of that private key
 	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
@@ -496,12 +494,12 @@ func workloadMixed() {
 	//3. configure nonce (prevent replay attacks with a user specific nonce)
 	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
-		log.Fatal("Impossible to get a nonce for account", err)
+		LogFatal("Impossible to get a nonce for account", err)
 	}
 	//4. configure gasPrice
 	gasPrice, err := client.SuggestGasPrice(context.Background())
 	if err != nil {
-		log.Fatal("Unable to get a gas price", err)
+		LogFatal("Unable to get a gas price", err)
 	}
 
 	// deploy a new contract
@@ -513,9 +511,9 @@ func workloadMixed() {
 	auth.GasPrice = gasPrice
 	contractAddr, _, instance, err := contracts.DeployQuickSort(auth, client)
 	if err != nil {
-		log.Fatal("Impossible to initialize a quicksort contract for this workload.", err)
+		LogFatal("Impossible to initialize a quicksort contract for this workload.", err)
 	}
-	log.Info("Wait for the 5 seconds (blocks) while contract is be mined before issuing operations.")
+	Log("Wait for the 5 seconds (blocks) while contract is be mined before issuing operations.")
 	time.Sleep(5 * time.Second)
 
 	doneWatchingLogs := make(chan struct{})
@@ -523,7 +521,7 @@ func workloadMixed() {
 	if !disable_events {
 		go watchContractEvents(contractAddr, doneWatchingLogs)
 	} else {
-		log.Infof("Event watchers are disabled.")
+		Log("Event watchers are disabled.")
 	}
 
 	// use the contract to run the increment workload
@@ -535,15 +533,15 @@ func workloadMixed() {
 	wg.Wait()
 
 	// time's up or #operations has finished
-	log.Info("Experiment FINISHED, wait for the 10 seconds to ensure pending transactions are processed")
+	Log("Experiment FINISHED, wait for the 10 seconds to ensure pending transactions are processed")
 	time.Sleep(10 * time.Second)
 	lastnonce, err := client.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
-		log.Fatal("Impossible to get a nonce for final report", err)
+		LogFatal("Impossible to get a nonce for final report", err)
 	}
 	auth.Nonce = big.NewInt(int64(lastnonce))
 	instance.PrintAllData(auth)
-	log.Info("Wait 10 seconds to receive the final log")
+	Log("Wait 10 seconds to receive the final log")
 	time.Sleep(10 * time.Second)
 	close(doneWatchingLogs)
 	//wait for logs to be closed
