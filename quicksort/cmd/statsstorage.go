@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"math"
 	"sort"
 	"sync"
@@ -15,6 +14,7 @@ type StatsStorage struct {
 	total_samples int64
 	total_keys	  int64
 	latencies 	  []int64
+	latencies_arflat_size int64
 }
 
 func (s *StatsStorage) StoreLatencySample(latency int64) bool {
@@ -35,12 +35,19 @@ func (s *StatsStorage) StoreLatencySample(latency int64) bool {
 	return !loaded
 }
 
+func (s *StatsStorage) ForceRecomputeArray()  {
+	//log.Info("Force recompute array called.")
+	s.latencies = nil
+	s.latencies_arflat_size = 0
+
+}
+
 // GetLatencyValuesFlattened
 // this version uses more memory and is not required as the compute methods are aware of repetitions
 func (s *StatsStorage) GetLatencyValuesFlattened() *[]int64 {
 	if s.latencies != nil {
 		//sorted previously and still valid
-		log.Infof("Previous latency slice is still valid. return")
+		//log.Infof("Previous latency slice is still valid. return")
 		return &s.latencies
 	}
 
@@ -59,40 +66,44 @@ func (s *StatsStorage) GetLatencyValuesFlattened() *[]int64 {
 	return &s.latencies
 }
 
-func (s *StatsStorage) GetLatencyValues() *[]int64 {
+func (s *StatsStorage) GetLatencyValues() (*[]int64, int64) {
 
 	if s.latencies != nil {
 		//sorted previously and still valid
-		log.Infof("Previous latency slice is still valid. return")
-		return &s.latencies
+		//log.Infof("Previous latency slice is still valid. return")
+		return &s.latencies, s.latencies_arflat_size
 	}
-
+	//log.Infof("Recompute latency slice")
+	s.latencies_arflat_size = 0 // rebuild
 	// create the slice
 	s.latencies = []int64{}
 	//iterate over the map, read the latencies and store them into the slice
 	s.storage.Range(func(key, value interface{}) bool {
 		//log.Infof("Appending new value to the slice: %v\n", key.(int64))
 		s.latencies = append(s.latencies, key.(int64))
+		s.latencies_arflat_size += *value.(*int64)
 		return true
 	})
 
 	//sort it
 	sort.Slice(s.latencies, func(i, j int) bool { return s.latencies[i] < s.latencies[j] })
-	return &s.latencies
+	return &s.latencies, s.latencies_arflat_size
 }
 
 func (s *StatsStorage) GetAverage(percent bool) int64 {
-	latencies := *s.GetLatencyValues()
+	latenciesAddr, size  := s.GetLatencyValues()
+	latencies := *latenciesAddr
 	latency := int64(0)
 	consumedSamples := int64(0)
 	limit := int64(0)
 
 	if percent {
 		//default is take 10%, and thus compute the 90%
-		limit = s.total_samples / 10
+		limit = size / 10
 	}
 
-	pos := s.total_samples - limit
+	pos := size - limit
+	if pos == 0 { pos = 1}
 	//find the position in the flat array
 	for i := 0 ; i < len(latencies); i++ {
 		latencyValue := latencies[i]
@@ -112,17 +123,24 @@ func (s *StatsStorage) GetAverage(percent bool) int64 {
 }
 
 func (s *StatsStorage) GetMedian(percent bool) int64 {
-	latencies := *s.GetLatencyValues()
+	latenciesAddr, size := s.GetLatencyValues()
+	latencies := *latenciesAddr
 	latency := int64(0)
 	consumedSamples := int64(0)
 	limit := int64(0)
+	//interpolate_median := false
 
 	if percent {
 		//default is take 10%, and thus compute the 90%
-		limit = s.total_samples / 10
+		limit = size / 10
 	}
 
-	median_pos := (s.total_samples - limit)/2 // small approximation error, no big deal
+	median_pos := (size - limit)/2 // small approximation error, no big deal
+	if median_pos == 0 { median_pos = 1}
+
+	//if (size - limit) % 2 > 0 {
+	//	interpolate_median = true
+	//}
 
 	//find the position in the flat array
 	for i := 0 ; i < len(latencies); i++ {
@@ -144,17 +162,20 @@ func (s *StatsStorage) GetMedian(percent bool) int64 {
 
 func (s *StatsStorage) GetSTD(percent bool) float64 {
 	if s.total_samples <= 1 {
-		return 0;
+		return 0
 	}
 
-	latencies := *s.GetLatencyValues()
+	latenciesAddr, size  := s.GetLatencyValues()
+	latencies := *latenciesAddr
+
 	limit := int64(0)
 	if percent {
 		//default is take 10%, and thus compute the 90%
-		limit = s.total_samples / 10
+		limit = size / 10
 	}
 	consumedSamples := int64(0)
-	pos := s.total_samples - limit
+	pos := size - limit
+	if pos == 0 { pos = 1}
 	med := s.GetAverage(percent)
 	quad := int64(0)
 
@@ -184,19 +205,22 @@ func (s *StatsStorage) GetSTD(percent bool) float64 {
 }
 
 func (s *StatsStorage) GetMax(percent bool) int64 {
-	latencies := *s.GetLatencyValues()
+	latenciesAddr, size  := s.GetLatencyValues()
+	latencies := *latenciesAddr
 	max_latency := int64(0)
 	consumedSamples := int64(0)
 	limit := int64(0)
 
 	if percent {
 		//default is take 10%, and thus compute the 90%
-		limit = s.total_samples / 10
+		limit = size / 10
 	} else {
 		return s.max_latency
 	}
 
-	pos := s.total_samples - limit
+	pos := size - limit
+	if pos == 0 { pos = 1}
+
 	//find the position in the flat array
 	for i := 0 ; i < len(latencies); i++ {
 		latencyValue := latencies[i]
@@ -217,9 +241,10 @@ func (s *StatsStorage) GetMax(percent bool) int64 {
 }
 
 func (s *StatsStorage) GetPercentile(percentile float32) int64 {
-	latencies := *s.GetLatencyValues()
+	latenciesAddr, size  := s.GetLatencyValues()
+	latencies := *latenciesAddr
 	consumedSamples := int64(0)
-	pos := int64(float64(s.total_samples) * float64(percentile))
+	pos := int64(float64(size) * float64(percentile))
 	latency := int64(0)
 
 	//find the position in the flat array
@@ -241,14 +266,29 @@ func (s *StatsStorage) GetPercentile(percentile float32) int64 {
 }
 
 func (s *StatsStorage) PrintStatsMap() {
+	fmt.Print("JSON Latencies: {")
 	s.storage.Range(func(key, value interface{}) bool {
-		fmt.Println(key, *value.(*int64))
+
+		fmt.Printf("\"%v\":%v,", key, *value.(*int64))
 		return true
 	})
+	fmt.Print("}\n")
 
+	//fmt.Println("Latencies:", a)
+}
 
-	a := s.GetLatencyValues()
-	fmt.Println("Latencies:", a)
+func (s *StatsStorage) ReportStats() string {
+	var reportline string
 
-	fmt.Printf("Max Latency: %v, Total samples: %v, Total keys: %v, average: %v  \n", s.max_latency, s.total_samples, s.total_keys, s.GetAverage(false))
+	s.ForceRecomputeArray()
+	_, qty := s.GetLatencyValues()
+
+	reportline = fmt.Sprintf("iteractions=%v ",s.total_samples)
+	reportline = fmt.Sprintf("%v size=%v"	 ,reportline, qty)
+	reportline = fmt.Sprintf("%v average=%v" ,reportline, s.GetAverage(false))
+	reportline = fmt.Sprintf("%v std=%v"	 ,reportline, s.GetSTD(false))
+	reportline = fmt.Sprintf("%v median=%v"	 ,reportline, s.GetMedian(false))
+	reportline = fmt.Sprintf("%v perc90=%v"	 ,reportline, s.GetPercentile(0.9))
+	reportline = fmt.Sprintf("%v max=%v"	 ,reportline, s.GetMax(false))
+	return reportline
 }

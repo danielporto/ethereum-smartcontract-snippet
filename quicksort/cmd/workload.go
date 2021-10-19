@@ -40,6 +40,7 @@ var operation string
 var count int
 var maxrate int // using for suggesting a workload value in tps
 var checkpoint int
+var timeline bool
 
 var requestNanotimeMap sync.Map
 var stats StatsStorage
@@ -83,6 +84,7 @@ func init() {
 	workloadCmd.PersistentFlags().IntVarP(&checkpoint, "checkpoint", "q", 5000, "Print total operations after X operations issued.")
 	workloadCmd.PersistentFlags().StringVarP(&client_id, "id", "", "undefined", "client identifier")
 
+	workloadCmd.PersistentFlags().BoolVarP(&timeline, "timeline", "", false, "print a timeline every second")
 }
 
 /*
@@ -122,13 +124,21 @@ func generateNonceAtRate(client *ethclient.Client, fromAddress common.Address, c
 	log.Infof("[Nonce]: Generate nonces starting from %v at a rate of: %v ops/s", nonce, rate)
 
 	if duration > 0 {
+		lastTimelinePrint := int64(-1)
 		for end := time.Now().Add(time.Second * time.Duration(duration)); ; {
-			if time.Now().After(end) {
+			sendInstant := time.Now()
+			if sendInstant.After(end) {
 				break
 			}
 			nonces <- nonce
 			nonce++
 			rl.Take()
+			if timeline {
+				if sendInstant.UnixNano() -lastTimelinePrint > 1_000_000_000 {
+					lastTimelinePrint = sendInstant.UnixNano()
+					log.Info(stats.ReportStats())
+				}
+			}
 		}
 
 	} else {
