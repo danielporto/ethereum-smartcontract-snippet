@@ -405,6 +405,7 @@ func workloadQuicksort() {
 	Log("Wait 10 seconds to receive the final log")
 	time.Sleep(10 * time.Second)
 	close(doneWatchingLogs)
+	Log(stats.ReportStats())
 	//wait for logs to be closed
 	time.Sleep(10 * time.Second)
 }
