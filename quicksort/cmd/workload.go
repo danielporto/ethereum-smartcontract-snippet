@@ -128,11 +128,11 @@ func generateNonceAtRate(client *ethclient.Client, fromAddress common.Address, c
 			if sendInstant.After(end) {
 				break
 			}
+			rl.Take()
 			nonces <- nonce
 			nonce++
-			rl.Take()
 			if timeline {
-				if sendInstant.UnixNano() -lastTimelinePrint > 1_000_000_000 {
+				if sendInstant.UnixNano() -lastTimelinePrint >= 1_000_000_000 {
 					lastTimelinePrint = sendInstant.UnixNano()
 					Log(stats.ReportStats())
 				}
@@ -141,9 +141,10 @@ func generateNonceAtRate(client *ethclient.Client, fromAddress common.Address, c
 
 	} else {
 		for i := 0; i < count; i++ {
+			rl.Take()
 			nonces <- nonce
 			nonce++
-			rl.Take()
+
 		}
 	}
 	close(nonces)
@@ -180,7 +181,7 @@ func watchContractEvents(contractAddr common.Address, done chan struct{}) {
 	<-done
 	Log("Logging thread: Teardown subscription to contract events.")
 
-	//stop all 4 logging threads
+	//stop all 6 logging threads
 	<-stop
 	<-stop
 	<-stop
@@ -316,8 +317,6 @@ func quicksort(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.Qu
 
 	}
 	Log("Thread %v FINISHED - quicksort transactions issued : %v", threadid, total_transactions)
-	stats.PrintStatsMap()
-
 }
 
 func workloadQuicksort() {
@@ -405,9 +404,11 @@ func workloadQuicksort() {
 	Log("Wait 10 seconds to receive the final log")
 	time.Sleep(10 * time.Second)
 	close(doneWatchingLogs)
-	Log(stats.ReportStats())
+
 	//wait for logs to be closed
 	time.Sleep(10 * time.Second)
+	stats.PrintStatsMap()
+	Log(stats.ReportStats())
 }
 
 /**********************************************************************************************************************

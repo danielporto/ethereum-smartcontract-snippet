@@ -173,7 +173,7 @@ func watchPrintConfirmation(client *ethclient.Client, contractAddr common.Addres
 
 	// get a reference to the *bind.BoundContract of the existing contract
 	bc := bind.NewBoundContract(contractAddr, parsed, client, client, client)
-	// configure a watcher for PrintHash events
+	// configure a watcher for  events
 	watchOpts := bind.WatchOpts{nil, context.Background()}
 	logs, sub, err := bc.WatchLogs(&watchOpts, eventName)
 	defer sub.Unsubscribe()
@@ -181,6 +181,7 @@ func watchPrintConfirmation(client *ethclient.Client, contractAddr common.Addres
 	if err != nil {
 		LogFatal("Error subscribing to contract Events ("+eventName+")", err)
 	}
+	Log("Logging thread: Listening for "+eventName+" events")
 	for {
 		select {
 		case logentry := <-logs:
@@ -202,7 +203,7 @@ func watchPrintConfirmation(client *ethclient.Client, contractAddr common.Addres
 				continue
 			}
 			latency_time_units := (tFin - tIniTyped)
-			LogDebug("{ \"event\": \"%v\", \"trx_id\": \"%v\", \"trx_hash\": \"%v\", latency: %v }", eventName, event.Arg0, hex.EncodeToString(event.Arg1[:]), latency_time_units)
+			LogDebug("{ \"event\": \"%v\", \"trx_id\": \"%v\", \"trx_hash\": \"%v\", \"latency\": %v }", eventName, event.Arg0, hex.EncodeToString(event.Arg1[:]), latency_time_units)
 			stat.StoreLatencySample(latency_time_units)
 		case err := <-sub.Err():
 			LogError("Error received in the subscription channel:", err)
