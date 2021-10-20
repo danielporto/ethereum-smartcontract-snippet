@@ -14,6 +14,7 @@ contract Bank {
     event BalanceReceived(uint);
     event BalanceTransferred(uint);
     event OperationsExecuted(uint);
+    event PrintConfirmation(string,uint); //trx_id, total_operations
 
     // emit the total operations in the log
     function logTransferOperations() public {
@@ -41,11 +42,11 @@ contract Bank {
 
 
     // transfer money to another account via smartcontract
-    function transferMoneyTo(address payable _to) public payable {
+    function transferMoneyTo(address payable _to, string calldata id) public payable {
         _to.transfer(msg.value);
         operations +=1;
-        emit BalanceTransferred(msg.value); //print amount transferred
-
+        //emit BalanceTransferred(msg.value); //print amount transferred
+        emit PrintConfirmation(id, operations);
     }
 
     // not mined, and free

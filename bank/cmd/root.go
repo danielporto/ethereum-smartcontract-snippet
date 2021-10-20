@@ -18,8 +18,8 @@ package cmd
 import (
 	"fmt"
 	"os"
-
-	log "github.com/sirupsen/logrus"
+	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -47,6 +47,48 @@ var trxgaslimit int32 //used for suggesting the fee for the transaction
 var duration int      //used for duration of experiment
 var threads int       // used for workload
 var verbosity string  //set log verbosity
+var client_id string  // client identifier to match transaction response
+var debug bool
+
+var latency_factor_unity string
+var latency_factor int64
+
+func Log(message string, a ...interface{}) {
+	var m string
+	m = fmt.Sprintf(message, a...)
+
+	now := time.Now()
+	location, _ := time.LoadLocation("Europe/Lisbon")
+	now_ts_ms := now.UnixNano() / 1_000_000
+	now_date := now.In(location).Format("2006-01-02 15:04:05")
+	fmt.Printf("%v|%v [BankTransferClient]: %v\n", now_date, now_ts_ms, m)
+}
+
+func LogWtag(tag, message string, a ...interface{}) {
+	var m string
+	m = fmt.Sprintf(message, a...)
+
+	now := time.Now()
+	location, _ := time.LoadLocation("Europe/Lisbon")
+	now_ts_ms := now.UnixNano() / 1_000_000
+	now_date := now.In(location).Format("2006-01-02 15:04:05")
+	fmt.Printf("%v|%v [BankTransferClient]: %v - %v\n", now_date, now_ts_ms, tag, m)
+}
+
+func LogFatal(message string, a ...interface{}) {
+	LogWtag("Fatal Error", message, a...)
+	os.Exit(-1)
+}
+func LogError(message string, a ...interface{}) {
+	LogWtag("Error", message, a...)
+}
+
+func LogDebug(message string, a ...interface{}) {
+	if !debug {
+		return
+	}
+	LogWtag("Debug", message, a...)
+}
 
 // rootCmd represents the base command when called without any subcommands
 // 1 eth in (wei)ght = 1 +18 zeros.
@@ -56,12 +98,20 @@ var rootCmd = &cobra.Command{
 	Short: "A tool to transfer funds between accounts",
 	Long:  `A golang client that interact with a quorum network to transfer funds between accounts in the blockchain.`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		lvl, err := log.ParseLevel(verbosity)
-		if err != nil {
-			log.Fatal("Invalid log level", err)
+		if strings.TrimSpace(strings.ToUpper(verbosity)) == "DEBUG" {
+			debug = true
+			LogDebug("Debug mode enabled")
+
 		}
-		log.SetLevel(lvl)
-		log.Debugf("Debug mode enabled")
+
+		switch latency_factor_unity {
+		case "microseconds":
+			latency_factor = 1_000
+			Log("Latency for request/reply are computed in  microseconds ")
+		case "milliseconds":
+			latency_factor = 1_000_000
+			Log("Latency for request/reply are computed in  milliseconds ")
+		}
 	},
 }
 
@@ -103,6 +153,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&verbosity, "verbosity", "v", "info", "Log level (trace, debug, info, warn, error, fatal, panic")
 	rootCmd.PersistentFlags().Int32VarP(&trxgaslimit, "gaslimit", "g", 3000000, "Gas limit for the transaction")
 	rootCmd.PersistentFlags().BoolVarP(&disable_events, "events", "e", false, "url of the server to connect to")
+	rootCmd.PersistentFlags().StringVarP(&latency_factor_unity, "req_latency_unity", "", "microseconds", "latency between the request and reply: microseconds/milliseconds")
 }
 
 // initConfig reads in config file and ENV variables if set.

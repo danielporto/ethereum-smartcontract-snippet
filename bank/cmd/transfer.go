@@ -1,5 +1,5 @@
 /*
-Copyright © 2021 NAME HERE <EMAIL ADDRESS>
+Copyright © 2021 DANIEL PORTO <daniel.porto@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,13 +27,11 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
+	"github.com/spf13/cobra"
 	"math/big"
 	"math/rand"
 	"strings"
 	"time"
-
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
 )
 
 // transferCmd represents the transfer command
@@ -48,7 +46,7 @@ bank transfer --host "192.168.10.166" --port 23000 \
     --origin 0  --target 1
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		log.Infoln("transfer called")
+		Log("transfer called")
 
 		keys = strings.Split(keys_str, ",")
 		wallets = strings.Split(wallets_str, ",")
@@ -67,8 +65,8 @@ bank transfer --host "192.168.10.166" --port 23000 \
 			}
 		}
 
-		log.Debugf("Origin: %v key: %v\n", origin, keys[origin])
-		log.Debugf("Target:%v wallet:%v\n", target, wallets[target])
+		LogDebug("Origin: %v key: %v\n", origin, keys[origin])
+		LogDebug("Target:%v wallet:%v\n", target, wallets[target])
 
 		Transfer(keys[origin], wallets[target], host, port)
 	},
@@ -113,6 +111,7 @@ func init() {
 	transferCmd.PersistentFlags().IntVarP(&target, "target", "", -1, "index of destination address (-1 will choose a random target wallet)")
 	transferCmd.PersistentFlags().IntVarP(&money, "money", "", 1000000000000, "Amount of money to transfer between accounts")
 	transferCmd.PersistentFlags().StringVarP(&contract, "contract", "", "", "Contract address on the blockchain.")
+	transferCmd.PersistentFlags().StringVarP(&client_id, "id", "", "undefined", "client identifier")
 	transferCmd.MarkFlagRequired("contract")
 
 }
@@ -123,7 +122,7 @@ func Transfer(src, dst, host, port string) *types.Transaction {
 	url := "ws://" + host + ":" + port
 	client, err := ethclient.Dial(url)
 	if err != nil {
-		log.Fatal(err)
+		LogFatal("Failed to connect to ethereum node", err)
 	}
 
 	// 2. Load credentials
@@ -132,13 +131,13 @@ func Transfer(src, dst, host, port string) *types.Transaction {
 	// ECDSA (elyptic curve DSA is the standard used by ethereum)
 	privateKey, err := crypto.HexToECDSA(src)
 	if err != nil {
-		log.Fatal("Error converting the private key", err)
+		LogFatal("Error converting the private key", err)
 	}
 
 	publicKey := privateKey.Public()
 	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
 	if !ok {
-		log.Fatal("Cannot assert type: public key is not the type *ecdsa.PublicKey")
+		LogFatal("Cannot assert type: public key is not the type *ecdsa.PublicKey")
 	}
 	//now get the account of that private key
 	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
@@ -146,13 +145,13 @@ func Transfer(src, dst, host, port string) *types.Transaction {
 	//3. configure nonce (prevent replay attacks with a user specific nonce)
 	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
-		log.Fatal("Impossible to get a nonce for acccount", err)
+		LogFatal("Impossible to get a nonce for acccount", err)
 	}
 
 	//4. configure gasPrice
 	gasPrice, err := client.SuggestGasPrice(context.Background())
 	if err != nil {
-		log.Fatal("Unable to get a gas price", err)
+		LogFatal("Unable to get a gas price", err)
 	}
 
 	// 4. setup an authenticated transactor with info from credentials and connection configuration
@@ -167,16 +166,17 @@ func Transfer(src, dst, host, port string) *types.Transaction {
 	address := common.HexToAddress(contract)
 	instance, err := contracts.NewBankTransactor(address, client)
 	if err != nil {
-		log.Fatal(err)
+		LogFatal("Impossible to initialize the contract for this workload.", err)
 	}
 
-	tx, err := instance.TransferMoneyTo(auth, common.HexToAddress(dst))
+	id := fmt.Sprintf("%v_tx_%v", client_id, nonce)
+	tx, err := instance.TransferMoneyTo(auth, common.HexToAddress(dst),id)
 	if err != nil {
-		log.Fatal("Failed to call transaction method", err)
+		LogFatal("Failed to call transaction method", err)
 	}
 	// check receipt
 	// if !checkReceipt(client, tx, 3) {
-	// 	log.Fatal("Error: impossible to verify the transaction", tx)
+	// 	LogFatal("Error: impossible to verify the transaction", tx)
 	// }
 
 	fmt.Printf("nonce %v, tx sent: %s\n", nonce, tx.Hash().Hex())
