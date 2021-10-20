@@ -90,7 +90,7 @@ bank workload -o [transfer|deploy|mixed] \
 			}
 		}
 		LogDebug("Origin: %v key: %v\n", origin, keys[origin])
-		LogDebug("Target:%v wallet:%v\n", target, wallets[target])
+		LogDebug("Target:%v wallet:%v", target, wallets[target])
 
 		switch operation {
 		case "transfer":
@@ -100,7 +100,7 @@ bank workload -o [transfer|deploy|mixed] \
 		case "mixed":
 			workloadMixed()
 		default:
-			LogFatal("Operation not supported:", operation)
+			LogFatal("Operation not supported: %v", operation)
 		}
 	},
 }
@@ -153,7 +153,7 @@ func generateNonce(init uint64, count, duration int, nonces chan<- uint64) {
 func generateNonceAtRate(client *ethclient.Client, fromAddress common.Address, count, duration int, nonces chan<- uint64, rate int) {
 	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
-		LogFatal("Impossible to get a nonce for account", err)
+		LogFatal("Impossible to get a nonce for account: %v", err)
 	}
 
 	if rate <= 0 {
@@ -200,13 +200,13 @@ func watchContractEvents(contractAddr common.Address, done chan struct{}) {
 	defer close(stop)
 	p, err := strconv.Atoi(port)
 	if err != nil {
-		LogFatal("Error converting the socket port:", port, err)
+		LogFatal("Error converting the socket port[%v]: %v", port, err)
 	}
 	wsurl := "ws://" + host + ":" + strconv.Itoa(p)
 
 	client, err := ethclient.Dial(wsurl)
 	if err != nil {
-		LogFatal("Error opening websocket connection to host.", wsurl, err)
+		LogFatal("Error opening websocket connection to host[%v]: %v", wsurl, err)
 	}
 	Log("Operations report checkpoint: %v ops", checkpoint)
 	Log("Logging thread: Subscribing to contract events: %v", wsurl)
@@ -248,7 +248,7 @@ func deploy(pk *ecdsa.PrivateKey, c *ethclient.Client, gasPrice *big.Int, nonces
 
 		address, _, _, err := contracts.DeployBank(auth, c)
 		if err != nil {
-			LogFatal("Error deploying Bank contract", err)
+			LogFatal("Error deploying Bank contract: %v", err)
 		}
 
 		total_transactions++
@@ -272,7 +272,7 @@ func workloadDeploy() {
 
 	conn, err := ethclient.Dial(url)
 	if err != nil {
-		LogFatal("Failed to connect to ethereum node", err)
+		LogFatal("Failed to connect to ethereum node: %v", err)
 	}
 
 	// 2. Load credentials
@@ -281,7 +281,7 @@ func workloadDeploy() {
 	// ECDSA (elyptic curve DSA is the standard used by ethereum)
 	privateKey, err := crypto.HexToECDSA(keys[origin])
 	if err != nil {
-		LogFatal("Error converting the private key from Hex to ECDSA", err)
+		LogFatal("Error converting the private key from Hex to ECDSA: %v", err)
 	}
 
 	publicKey := privateKey.Public()
@@ -296,7 +296,7 @@ func workloadDeploy() {
 	//4. configure gasPrice
 	gasPrice, err := conn.SuggestGasPrice(context.Background())
 	if err != nil {
-		LogFatal("Error while trying to get the gas price: ", err)
+		LogFatal("Error while trying to get the gas price: %v", err)
 	}
 
 	go generateNonceAtRate(conn, fromAddress, count, duration, nonceStream, maxrate)
@@ -338,7 +338,8 @@ func transfer(pk *ecdsa.PrivateKey, instance *contracts.Bank, gasPrice *big.Int,
 		tIni_us := time.Now().UnixNano() / latency_factor // get the timestamp in microsseconds
 		tx, err := instance.TransferMoneyTo(auth, common.HexToAddress(wallets[target]), id)
 		if err != nil {
-			LogFatal("Failed to call transfer transaction method of counter contract. Check the gaslimit for this transaction:", auth.GasLimit, " err:", err)
+			LogFatal("Failed to call transfer transaction method of bank contract. Check the Gas limit [%v] for this transaction: %v", auth.GasLimit, err)
+
 		}
 		requestTimeMap.Store(id, tIni_us) //stores the timestamp in which the request was made (this will be updated by the event function)
 
@@ -360,7 +361,7 @@ func workloadTransfer() {
 
 	client, err := ethclient.Dial(url)
 	if err != nil {
-		LogFatal("Failed to connect to ethereum node", err)
+		LogFatal("Failed to connect to ethereum node: %v", err)
 	}
 
 	// 2. Load credentials
@@ -369,7 +370,7 @@ func workloadTransfer() {
 	// ECDSA (elyptic curve DSA is the standard used by ethereum)
 	privateKey, err := crypto.HexToECDSA(keys[origin])
 	if err != nil {
-		LogFatal("Error converting the private key from Hex to ECDSA", err)
+		LogFatal("Error converting the private key from Hex to ECDSA: %v", err)
 	}
 
 	publicKey := privateKey.Public()
@@ -384,12 +385,12 @@ func workloadTransfer() {
 	//3. configure nonce (prevent replay attacks with a user specific nonce)
 	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
-		LogFatal("Impossible to get a nonce for account", err)
+		LogFatal("Impossible to get a nonce for account: %v", err)
 	}
 	//4. configure gasPrice
 	gasPrice, err := client.SuggestGasPrice(context.Background())
 	if err != nil {
-		LogFatal("Unable to get a gas price", err)
+		LogFatal("Unable to get a gas price: %v", err)
 	}
 
 	// deploy a new contract
@@ -401,7 +402,7 @@ func workloadTransfer() {
 	auth.GasPrice = gasPrice
 	contractAddr, _, instance, err := contracts.DeployBank(auth, client)
 	if err != nil {
-		LogFatal("Impossible to initialize a bank contract for this workload. ", err)
+		LogFatal("Impossible to initialize a bank contract for this workload: %v", err)
 	}
 	Log("Wait for the 5 seconds (blocks) while contract is be mined before issuing operations.")
 	time.Sleep(5 * time.Second)
@@ -427,7 +428,7 @@ func workloadTransfer() {
 	time.Sleep(10 * time.Second)
 	lastnonce, err := client.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
-		LogFatal("Impossible to get a nonce for final report", err)
+		LogFatal("Impossible to get a nonce for final report: %v", err)
 	}
 	auth.Nonce = big.NewInt(int64(lastnonce))
 	instance.LogTransferOperations(auth)
@@ -465,16 +466,16 @@ func mixed(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.Bank, 
 		if nonce%2 == 0 {
 			address, _, _, err := contracts.DeployBank(auth, c)
 			if err != nil {
-				LogFatal("Error deploying bank contract", err)
+				LogFatal("Error deploying bank contract: %v", err)
 			}
-			LogDebug("Transaction address: %v\n", address.Hex())
+			LogDebug("Transaction address: %v", address.Hex())
 		} else {
 			id := fmt.Sprintf("%v_tx_%v", client_id, nonce)
 			tx, err := instance.TransferMoneyTo(auth, common.HexToAddress(wallets[target]), id)
 			if err != nil {
-				LogFatal("Failed to call transaction method: ", err)
+				LogFatal("Failed to call transaction method: %v", err)
 			}
-			LogDebug("nonce %v, tx sent: %s\n", nonce, tx.Hash().Hex())
+			LogDebug("nonce %v, tx sent: %s", nonce, tx.Hash().Hex())
 		}
 		total_transactions++
 
@@ -494,7 +495,7 @@ func workloadMixed() {
 
 	client, err := ethclient.Dial(url)
 	if err != nil {
-		LogFatal("Failed to connect to ethereum node", err)
+		LogFatal("Failed to connect to ethereum node: %v", err)
 	}
 
 	// 2. Load credentials
@@ -503,7 +504,7 @@ func workloadMixed() {
 	// ECDSA (elyptic curve DSA is the standard used by ethereum)
 	privateKey, err := crypto.HexToECDSA(key)
 	if err != nil {
-		LogFatal("Error converting the private key from Hex to ECDSA", err)
+		LogFatal("Error converting the private key from Hex to ECDSA: %v", err)
 	}
 
 	publicKey := privateKey.Public()
@@ -517,12 +518,12 @@ func workloadMixed() {
 	//3. configure nonce (prevent replay attacks with a user specific nonce)
 	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
-		LogFatal("Impossible to get a nonce for account", err)
+		LogFatal("Impossible to get a nonce for account: %v", err)
 	}
 	//4. configure gasPrice
 	gasPrice, err := client.SuggestGasPrice(context.Background())
 	if err != nil {
-		LogFatal("Unable to get a gas price", err)
+		LogFatal("Unable to get a gas price: %v", err)
 	}
 
 	// deploy a new contract
@@ -534,7 +535,7 @@ func workloadMixed() {
 	auth.GasPrice = gasPrice
 	contractAddr, _, instance, err := contracts.DeployBank(auth, client)
 	if err != nil {
-		LogFatal("Impossible to initialize a bank contract for this workload.", err)
+		LogFatal("Impossible to initialize a bank contract for this workload: %v", err)
 	}
 	Log("Wait for the 5 seconds (blocks) while contract is be mined before issuing operations.")
 	time.Sleep(5 * time.Second)
@@ -560,7 +561,7 @@ func workloadMixed() {
 	time.Sleep(10 * time.Second)
 	lastnonce, err := client.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
-		LogFatal("Impossible to get a nonce for final report", err)
+		LogFatal("Impossible to get a nonce for final report: %v", err)
 	}
 	auth.Nonce = big.NewInt(int64(lastnonce))
 	instance.LogTransferOperations(auth)
