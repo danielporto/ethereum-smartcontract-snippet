@@ -89,7 +89,7 @@ bank workload -o [transfer|deploy|mixed] \
 				// just loop for a random num until is different from self
 			}
 		}
-		LogDebug("Origin: %v key: %v\n", origin, keys[origin])
+		LogDebug("Origin: %v key: %v", origin, keys[origin])
 		LogDebug("Target:%v wallet:%v", target, wallets[target])
 
 		switch operation {
@@ -255,7 +255,7 @@ func deploy(pk *ecdsa.PrivateKey, c *ethclient.Client, gasPrice *big.Int, nonces
 		if total_transactions%checkpoint == 0 {
 			Log("Thread %v - deploy transactions issued : %v", threadid, total_transactions)
 		}
-		LogDebug("Transaction address: %v\n", address.Hex())
+		LogDebug("Transaction address: %v", address.Hex())
 	}
 	Log("Thread %v FINISHED - deploy contract transactions issued : %v", threadid, total_transactions)
 

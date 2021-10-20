@@ -64,7 +64,7 @@ Then, call several operations of that contract. `,
 			Log("Size of the array to sort: %v", payloadsize)
 			workloadMixed()
 		default:
-			LogFatal("Operation not supported:", operation)
+			LogFatal("Operation not supported: %v", operation)
 
 		}
 	},
@@ -111,7 +111,7 @@ func generateNonce(init uint64, count, duration int, nonces chan<- uint64) {
 func generateNonceAtRate(client *ethclient.Client, fromAddress common.Address, count, duration int, nonces chan<- uint64, rate int) {
 	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
-		LogFatal("Impossible to get a nonce for account", err)
+		LogFatal("Impossible to get a nonce for account: %v", err)
 	}
 
 	if rate <= 0 {
@@ -158,13 +158,13 @@ func watchContractEvents(contractAddr common.Address, done chan struct{}) {
 	defer close(stop)
 	p, err := strconv.Atoi(port)
 	if err != nil {
-		LogFatal("Error converting the socket port:", port, err)
+		LogFatal("Error converting the socket port[%v]: %v", port, err)
 	}
 	wsurl := "ws://" + host + ":" + strconv.Itoa(p)
 
 	client, err := ethclient.Dial(wsurl)
 	if err != nil {
-		LogFatal("Error opening websocket connection to host.", wsurl, err)
+		LogFatal("Error opening websocket connection to host[%v]: %v", wsurl, err)
 	}
 	Log("Operations report checkpoint: %v ops", checkpoint)
 	Log("Logging thread: Subscribing to contract events: %v", wsurl)
@@ -209,14 +209,14 @@ func deploy(pk *ecdsa.PrivateKey, c *ethclient.Client, gasPrice *big.Int, nonces
 
 		address, _, _, err := contracts.DeployQuickSort(auth, c)
 		if err != nil {
-			LogFatal("Error deploying quicksort contract", err)
+			LogFatal("Error deploying quicksort contract: %v", err)
 		}
 
 		total_transactions++
 		if total_transactions%checkpoint == 0 {
 			Log("Thread %v - deploy transactions issued : %v", threadid, total_transactions)
 		}
-		LogDebug("Transaction address: %v\n", address.Hex())
+		LogDebug("Transaction address: %v", address.Hex())
 	}
 	Log("Thread %v FINISHED - deploy contract transactions issued : %v", threadid, total_transactions)
 
@@ -233,7 +233,7 @@ func workloadDeploy() {
 
 	conn, err := ethclient.Dial(url)
 	if err != nil {
-		LogFatal("Failed to connect to ethereum node", err)
+		LogFatal("Failed to connect to ethereum node: %v", err)
 	}
 
 	// 2. Load credentials
@@ -242,7 +242,7 @@ func workloadDeploy() {
 	// ECDSA (elyptic curve DSA is the standard used by ethereum)
 	privateKey, err := crypto.HexToECDSA(key)
 	if err != nil {
-		LogFatal("Error converting the private key from Hex to ECDSA", err)
+		LogFatal("Error converting the private key from Hex to ECDSA: %v", err)
 	}
 
 	publicKey := privateKey.Public()
@@ -257,7 +257,7 @@ func workloadDeploy() {
 	//4. configure gasPrice
 	gasPrice, err := conn.SuggestGasPrice(context.Background())
 	if err != nil {
-		LogFatal("Error while trying to get the gas price: ", err)
+		LogFatal("Error while trying to get the gas price: %v", err)
 	}
 
 	go generateNonceAtRate(conn, fromAddress, count, duration, nonceStream, maxrate)
@@ -308,12 +308,12 @@ func quicksort(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.Qu
 		tIni_us := time.Now().UnixNano() / latency_factor // get the timestamp in microsseconds
 		tx, err := sort(auth, big.NewInt(int64(payloadsize)), id)
 		if err != nil {
-			LogFatal("Failed to call sort transaction method of quicksort contract. Check the Gas limit [%v ]for this transaction. Detail: %v", auth.GasLimit, err)
+			LogFatal("Failed to call sort transaction method of quicksort contract. Check the Gas limit [%v] for this transaction. Detail: %v", auth.GasLimit, err)
 		}
 		requestNanotimeMap.Store(id, tIni_us) //stores the timestamp in which the request was made (this will be updated by the event function)
 
 		total_transactions++
-		LogDebug("nonce %v, tx sent: %s\n", nonce, tx.Hash().Hex())
+		LogDebug("nonce %v, tx sent: %s", nonce, tx.Hash().Hex())
 
 	}
 	Log("Thread %v FINISHED - quicksort transactions issued : %v", threadid, total_transactions)
@@ -330,7 +330,7 @@ func workloadQuicksort() {
 
 	client, err := ethclient.Dial(url)
 	if err != nil {
-		LogFatal("Failed to connect to ethereum node", err)
+		LogFatal("Failed to connect to ethereum node: %v", err)
 	}
 
 	// 2. Load credentials
@@ -339,7 +339,7 @@ func workloadQuicksort() {
 	// ECDSA (elyptic curve DSA is the standard used by ethereum)
 	privateKey, err := crypto.HexToECDSA(key)
 	if err != nil {
-		LogFatal("Error converting the private key from Hex to ECDSA", err)
+		LogFatal("Error converting the private key from Hex to ECDSA: %v", err)
 	}
 
 	publicKey := privateKey.Public()
@@ -354,12 +354,12 @@ func workloadQuicksort() {
 	//3. configure nonce (prevent replay attacks with a user specific nonce)
 	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
-		LogFatal("Impossible to get a nonce for account", err)
+		LogFatal("Impossible to get a nonce for account: %v", err)
 	}
 	//4. configure gasPrice
 	gasPrice, err := client.SuggestGasPrice(context.Background())
 	if err != nil {
-		LogFatal("Unable to get a gas price", err)
+		LogFatal("Unable to get a gas price: %v", err)
 	}
 
 	// deploy a new contract
@@ -371,7 +371,7 @@ func workloadQuicksort() {
 	auth.GasPrice = gasPrice
 	contractAddr, _, instance, err := contracts.DeployQuickSort(auth, client)
 	if err != nil {
-		LogFatal("Impossible to initialize a quicksort contract for this workload.", err)
+		LogFatal("Impossible to initialize a quicksort contract for this workload: %v", err)
 	}
 	Log("Wait for the 5 seconds (blocks) while contract is be mined before issuing operations.")
 	time.Sleep(5 * time.Second)
@@ -397,7 +397,7 @@ func workloadQuicksort() {
 	time.Sleep(10 * time.Second)
 	lastnonce, err := client.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
-		LogFatal("Impossible to get a nonce for final report", err)
+		LogFatal("Impossible to get a nonce for final report: %v", err)
 	}
 	auth.Nonce = big.NewInt(int64(lastnonce))
 	instance.PrintAllData(auth)
@@ -444,16 +444,16 @@ func mixed(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.QuickS
 		if nonce%2 == 0 {
 			address, _, _, err := contracts.DeployQuickSort(auth, c)
 			if err != nil {
-				LogFatal("Error deploying quicksort contract", err)
+				LogFatal("Error deploying quicksort contract: %v", err)
 			}
-			LogDebug("Transaction address: %v\n", address.Hex())
+			LogDebug("Transaction address: %v", address.Hex())
 		} else {
 			id := fmt.Sprintf("%v_tx_%v",  client_id,nonce)
 			tx, err := sort(auth, big.NewInt(int64(payloadsize)), id)
 			if err != nil {
 				LogFatal("Failed to call transaction method: ", err)
 			}
-			LogDebug("nonce %v, tx sent: %s\n", nonce, tx.Hash().Hex())
+			LogDebug("nonce %v, tx sent: %s", nonce, tx.Hash().Hex())
 		}
 		total_transactions++
 
@@ -473,7 +473,7 @@ func workloadMixed() {
 
 	client, err := ethclient.Dial(url)
 	if err != nil {
-		LogFatal("Failed to connect to ethereum node", err)
+		LogFatal("Failed to connect to ethereum node: %v", err)
 	}
 
 	// 2. Load credentials
@@ -482,7 +482,7 @@ func workloadMixed() {
 	// ECDSA (elliptic curve DSA is the standard used by ethereum)
 	privateKey, err := crypto.HexToECDSA(key)
 	if err != nil {
-		LogFatal("Error converting the private key from Hex to ECDSA", err)
+		LogFatal("Error converting the private key from Hex to ECDSA: %v", err)
 	}
 
 	publicKey := privateKey.Public()
@@ -496,12 +496,12 @@ func workloadMixed() {
 	//3. configure nonce (prevent replay attacks with a user specific nonce)
 	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
-		LogFatal("Impossible to get a nonce for account", err)
+		LogFatal("Impossible to get a nonce for account: %v", err)
 	}
 	//4. configure gasPrice
 	gasPrice, err := client.SuggestGasPrice(context.Background())
 	if err != nil {
-		LogFatal("Unable to get a gas price", err)
+		LogFatal("Unable to get a gas price: %v", err)
 	}
 
 	// deploy a new contract
@@ -513,7 +513,7 @@ func workloadMixed() {
 	auth.GasPrice = gasPrice
 	contractAddr, _, instance, err := contracts.DeployQuickSort(auth, client)
 	if err != nil {
-		LogFatal("Impossible to initialize a quicksort contract for this workload.", err)
+		LogFatal("Impossible to initialize a quicksort contract for this workload: %v", err)
 	}
 	Log("Wait for the 5 seconds (blocks) while contract is be mined before issuing operations.")
 	time.Sleep(5 * time.Second)
@@ -539,7 +539,7 @@ func workloadMixed() {
 	time.Sleep(10 * time.Second)
 	lastnonce, err := client.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
-		LogFatal("Impossible to get a nonce for final report", err)
+		LogFatal("Impossible to get a nonce for final report: %v", err)
 	}
 	auth.Nonce = big.NewInt(int64(lastnonce))
 	instance.PrintAllData(auth)
