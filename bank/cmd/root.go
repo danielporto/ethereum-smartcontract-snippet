@@ -42,8 +42,8 @@ var port string
 var disable_events bool
 
 var contract string   // used as bank middleware for the transaction
-var money int         //amount for transfer
-var trxgaslimit int32 //used for suggesting the fee for the transaction
+var money int64         //amount for transfer
+var trxgaslimit uint64 //used for suggesting the fee for the transaction
 var duration int      //used for duration of experiment
 var threads int       // used for workload
 var verbosity string  //set log verbosity
@@ -151,7 +151,7 @@ func init() {
 	rootCmd.MarkPersistentFlagRequired("port")
 
 	rootCmd.PersistentFlags().StringVarP(&verbosity, "verbosity", "v", "info", "Log level (trace, debug, info, warn, error, fatal, panic")
-	rootCmd.PersistentFlags().Int32VarP(&trxgaslimit, "gaslimit", "g", 3000000, "Gas limit for the transaction")
+	rootCmd.PersistentFlags().Uint64VarP(&trxgaslimit, "gaslimit", "g", 3000000, "Gas limit for the transaction")
 	rootCmd.PersistentFlags().BoolVarP(&disable_events, "events", "e", false, "url of the server to connect to")
 	rootCmd.PersistentFlags().StringVarP(&latency_factor_unity, "req_latency_unity", "", "microseconds", "latency between the request and reply: microseconds/milliseconds")
 }

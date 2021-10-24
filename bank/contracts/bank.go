@@ -30,18 +30,19 @@ var (
 
 // BankMetaData contains all meta data concerning the Bank contract.
 var BankMetaData = &bind.MetaData{
-	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"BalanceReceived\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"BalanceTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"OperationsExecuted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"PrintConfirmation\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"balanceReceived\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getBalance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getOperations\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"logTransferOperations\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"addresspayable\",\"name\":\"_to\",\"type\":\"address\"}],\"name\":\"payMoneyTo\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"receiveMoney\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"addresspayable\",\"name\":\"_to\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"id\",\"type\":\"string\"}],\"name\":\"transferMoneyTo\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"withdrawMoney\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"BalanceReceived\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"BalanceTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"OperationsExecuted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"PrintConfirmation\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"balanceReceived\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"id\",\"type\":\"string\"}],\"name\":\"deposit\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"addresspayable\",\"name\":\"_to\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"id\",\"type\":\"string\"}],\"name\":\"directTransferTo\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getBalance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getOperations\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"logTransferOperations\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"receiveMoney\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"id\",\"type\":\"string\"}],\"name\":\"withdrawMoney\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"id\",\"type\":\"string\"},{\"internalType\":\"addresspayable\",\"name\":\"_to\",\"type\":\"address\"}],\"name\":\"withdrawMoneyTo\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"}]",
 	Sigs: map[string]string{
 		"52a90c42": "balanceReceived()",
+		"a26e1186": "deposit(string)",
+		"a9c73c36": "directTransferTo(address,string)",
 		"12065fe0": "getBalance()",
 		"f948e50a": "getOperations()",
 		"2059ab90": "logTransferOperations()",
-		"82664c61": "payMoneyTo(address)",
 		"6d26ec18": "receiveMoney()",
-		"ec197ed8": "transferMoneyTo(address,string)",
-		"ac446002": "withdrawMoney()",
+		"f8d708dc": "withdrawMoney(string)",
+		"e883c06a": "withdrawMoneyTo(string,address)",
 	},
-	Bin: "0x60806040526000805534801561001457600080fd5b5061042d806100246000396000f3fe60806040526004361061007b5760003560e01c806382664c611161004e57806382664c61146100d6578063ac446002146100e9578063ec197ed8146100fe578063f948e50a1461011157600080fd5b806312065fe0146100805780632059ab90146100a157806352a90c42146100b85780636d26ec18146100ce575b600080fd5b34801561008c57600080fd5b50475b60405190815260200160405180910390f35b3480156100ad57600080fd5b506100b6610126565b005b3480156100c457600080fd5b5061008f60015481565b6100b6610163565b6100b66100e43660046102f3565b6101aa565b3480156100f557600080fd5b506100b6610216565b6100b661010c366004610315565b610248565b34801561011d57600080fd5b5060005461008f565b7f45b1c2f5c9e32511e6eb1772825abe442d6058ea66dd4e139a8fcc84b7a3c71260005460405161015991815260200190565b60405180910390a1565b34600160008282546101759190610398565b90915550506040513481527fbb27de1f6791c153e5749c6e33c63738bcdf867fb4a778f2e3ea9b01c338eb5f90602001610159565b6040516001600160a01b038216903480156108fc02916000818181858888f193505050501580156101df573d6000803e3d6000fd5b506040513481527f3760d80235c7b3a7167f5f927afb58bcdcb8e3f99c8571aaf8544cdb70f3b3119060200160405180910390a150565b33806108fc476040518115909202916000818181858888f19350505050158015610244573d6000803e3d6000fd5b5050565b6040516001600160a01b038416903480156108fc02916000818181858888f1935050505015801561027d573d6000803e3d6000fd5b5060016000808282546102909190610398565b90915550506000546040517fa5b236924ed143061aeda12329df0e5b7ecf459631fbbf10a8f604cc18787811916102ca91859185916103be565b60405180910390a1505050565b80356001600160a01b03811681146102ee57600080fd5b919050565b60006020828403121561030557600080fd5b61030e826102d7565b9392505050565b60008060006040848603121561032a57600080fd5b610333846102d7565b9250602084013567ffffffffffffffff8082111561035057600080fd5b818601915086601f83011261036457600080fd5b81358181111561037357600080fd5b87602082850101111561038557600080fd5b6020830194508093505050509250925092565b600082198211156103b957634e487b7160e01b600052601160045260246000fd5b500190565b604081528260408201528284606083013760006060848301015260006060601f19601f860116830101905082602083015294935050505056fea2646970667358221220f0d7fcf9e53483b08a21a4aaff4a1377363a239774e50abdf6ae5b877ad4489c64736f6c63430008090033",
+	Bin: "0x60806040526000805534801561001457600080fd5b50610537806100246000396000f3fe6080604052600436106100865760003560e01c8063a26e118611610059578063a26e1186146100e1578063a9c73c36146100f4578063e883c06a14610107578063f8d708dc1461011a578063f948e50a1461013a57600080fd5b806312065fe01461008b5780632059ab90146100ac57806352a90c42146100c35780636d26ec18146100d9575b600080fd5b34801561009757600080fd5b50475b60405190815260200160405180910390f35b3480156100b857600080fd5b506100c161014f565b005b3480156100cf57600080fd5b5061009a60015481565b6100c161018d565b6100c16100ef36600461039d565b6101d4565b6100c16101023660046103fb565b61022c565b6100c161011536600461044e565b6102bb565b34801561012657600080fd5b506100c161013536600461039d565b610326565b34801561014657600080fd5b5060005461009a565b600054604080519182524760208301527fef1c94cbc35308081c9f68ac9090ed940be17995b42a7c9788d6854336e51fb291015b60405180910390a1565b346001600082825461019f91906104a2565b90915550506040513481527fbb27de1f6791c153e5749c6e33c63738bcdf867fb4a778f2e3ea9b01c338eb5f90602001610183565b34600160008282546101e691906104a2565b90915550506000546040517fa5b236924ed143061aeda12329df0e5b7ecf459631fbbf10a8f604cc187878119161022091859185916104c8565b60405180910390a15050565b6040516001600160a01b038416903480156108fc02916000818181858888f19350505050158015610261573d6000803e3d6000fd5b50600160008082825461027491906104a2565b90915550506000546040517fa5b236924ed143061aeda12329df0e5b7ecf459631fbbf10a8f604cc18787811916102ae91859185916104c8565b60405180910390a1505050565b6040516001600160a01b038216903480156108fc02916000818181858888f193505050501580156102f0573d6000803e3d6000fd5b507fa5b236924ed143061aeda12329df0e5b7ecf459631fbbf10a8f604cc1878781183836000546040516102ae939291906104c8565b33806108fc476040518115909202916000818181858888f193505050501580156102f0573d6000803e3d6000fd5b60008083601f84011261036657600080fd5b50813567ffffffffffffffff81111561037e57600080fd5b60208301915083602082850101111561039657600080fd5b9250929050565b600080602083850312156103b057600080fd5b823567ffffffffffffffff8111156103c757600080fd5b6103d385828601610354565b90969095509350505050565b80356001600160a01b03811681146103f657600080fd5b919050565b60008060006040848603121561041057600080fd5b610419846103df565b9250602084013567ffffffffffffffff81111561043557600080fd5b61044186828701610354565b9497909650939450505050565b60008060006040848603121561046357600080fd5b833567ffffffffffffffff81111561047a57600080fd5b61048686828701610354565b90945092506104999050602085016103df565b90509250925092565b600082198211156104c357634e487b7160e01b600052601160045260246000fd5b500190565b604081528260408201528284606083013760006060848301015260006060601f19601f860116830101905082602083015294935050505056fea26469706673582212204404e1b08124663ce9250e650207fe6d3ef715c4cb5d72fb1cafca0c2a96e8d064736f6c63430008090033",
 }
 
 // BankABI is the input ABI used to generate the binding from.
@@ -308,6 +309,48 @@ func (_Bank *BankCallerSession) GetOperations() (*big.Int, error) {
 	return _Bank.Contract.GetOperations(&_Bank.CallOpts)
 }
 
+// Deposit is a paid mutator transaction binding the contract method 0xa26e1186.
+//
+// Solidity: function deposit(string id) payable returns()
+func (_Bank *BankTransactor) Deposit(opts *bind.TransactOpts, id string) (*types.Transaction, error) {
+	return _Bank.contract.Transact(opts, "deposit", id)
+}
+
+// Deposit is a paid mutator transaction binding the contract method 0xa26e1186.
+//
+// Solidity: function deposit(string id) payable returns()
+func (_Bank *BankSession) Deposit(id string) (*types.Transaction, error) {
+	return _Bank.Contract.Deposit(&_Bank.TransactOpts, id)
+}
+
+// Deposit is a paid mutator transaction binding the contract method 0xa26e1186.
+//
+// Solidity: function deposit(string id) payable returns()
+func (_Bank *BankTransactorSession) Deposit(id string) (*types.Transaction, error) {
+	return _Bank.Contract.Deposit(&_Bank.TransactOpts, id)
+}
+
+// DirectTransferTo is a paid mutator transaction binding the contract method 0xa9c73c36.
+//
+// Solidity: function directTransferTo(address _to, string id) payable returns()
+func (_Bank *BankTransactor) DirectTransferTo(opts *bind.TransactOpts, _to common.Address, id string) (*types.Transaction, error) {
+	return _Bank.contract.Transact(opts, "directTransferTo", _to, id)
+}
+
+// DirectTransferTo is a paid mutator transaction binding the contract method 0xa9c73c36.
+//
+// Solidity: function directTransferTo(address _to, string id) payable returns()
+func (_Bank *BankSession) DirectTransferTo(_to common.Address, id string) (*types.Transaction, error) {
+	return _Bank.Contract.DirectTransferTo(&_Bank.TransactOpts, _to, id)
+}
+
+// DirectTransferTo is a paid mutator transaction binding the contract method 0xa9c73c36.
+//
+// Solidity: function directTransferTo(address _to, string id) payable returns()
+func (_Bank *BankTransactorSession) DirectTransferTo(_to common.Address, id string) (*types.Transaction, error) {
+	return _Bank.Contract.DirectTransferTo(&_Bank.TransactOpts, _to, id)
+}
+
 // LogTransferOperations is a paid mutator transaction binding the contract method 0x2059ab90.
 //
 // Solidity: function logTransferOperations() returns()
@@ -327,27 +370,6 @@ func (_Bank *BankSession) LogTransferOperations() (*types.Transaction, error) {
 // Solidity: function logTransferOperations() returns()
 func (_Bank *BankTransactorSession) LogTransferOperations() (*types.Transaction, error) {
 	return _Bank.Contract.LogTransferOperations(&_Bank.TransactOpts)
-}
-
-// PayMoneyTo is a paid mutator transaction binding the contract method 0x82664c61.
-//
-// Solidity: function payMoneyTo(address _to) payable returns()
-func (_Bank *BankTransactor) PayMoneyTo(opts *bind.TransactOpts, _to common.Address) (*types.Transaction, error) {
-	return _Bank.contract.Transact(opts, "payMoneyTo", _to)
-}
-
-// PayMoneyTo is a paid mutator transaction binding the contract method 0x82664c61.
-//
-// Solidity: function payMoneyTo(address _to) payable returns()
-func (_Bank *BankSession) PayMoneyTo(_to common.Address) (*types.Transaction, error) {
-	return _Bank.Contract.PayMoneyTo(&_Bank.TransactOpts, _to)
-}
-
-// PayMoneyTo is a paid mutator transaction binding the contract method 0x82664c61.
-//
-// Solidity: function payMoneyTo(address _to) payable returns()
-func (_Bank *BankTransactorSession) PayMoneyTo(_to common.Address) (*types.Transaction, error) {
-	return _Bank.Contract.PayMoneyTo(&_Bank.TransactOpts, _to)
 }
 
 // ReceiveMoney is a paid mutator transaction binding the contract method 0x6d26ec18.
@@ -371,46 +393,46 @@ func (_Bank *BankTransactorSession) ReceiveMoney() (*types.Transaction, error) {
 	return _Bank.Contract.ReceiveMoney(&_Bank.TransactOpts)
 }
 
-// TransferMoneyTo is a paid mutator transaction binding the contract method 0xec197ed8.
+// WithdrawMoney is a paid mutator transaction binding the contract method 0xf8d708dc.
 //
-// Solidity: function transferMoneyTo(address _to, string id) payable returns()
-func (_Bank *BankTransactor) TransferMoneyTo(opts *bind.TransactOpts, _to common.Address, id string) (*types.Transaction, error) {
-	return _Bank.contract.Transact(opts, "transferMoneyTo", _to, id)
+// Solidity: function withdrawMoney(string id) returns()
+func (_Bank *BankTransactor) WithdrawMoney(opts *bind.TransactOpts, id string) (*types.Transaction, error) {
+	return _Bank.contract.Transact(opts, "withdrawMoney", id)
 }
 
-// TransferMoneyTo is a paid mutator transaction binding the contract method 0xec197ed8.
+// WithdrawMoney is a paid mutator transaction binding the contract method 0xf8d708dc.
 //
-// Solidity: function transferMoneyTo(address _to, string id) payable returns()
-func (_Bank *BankSession) TransferMoneyTo(_to common.Address, id string) (*types.Transaction, error) {
-	return _Bank.Contract.TransferMoneyTo(&_Bank.TransactOpts, _to, id)
+// Solidity: function withdrawMoney(string id) returns()
+func (_Bank *BankSession) WithdrawMoney(id string) (*types.Transaction, error) {
+	return _Bank.Contract.WithdrawMoney(&_Bank.TransactOpts, id)
 }
 
-// TransferMoneyTo is a paid mutator transaction binding the contract method 0xec197ed8.
+// WithdrawMoney is a paid mutator transaction binding the contract method 0xf8d708dc.
 //
-// Solidity: function transferMoneyTo(address _to, string id) payable returns()
-func (_Bank *BankTransactorSession) TransferMoneyTo(_to common.Address, id string) (*types.Transaction, error) {
-	return _Bank.Contract.TransferMoneyTo(&_Bank.TransactOpts, _to, id)
+// Solidity: function withdrawMoney(string id) returns()
+func (_Bank *BankTransactorSession) WithdrawMoney(id string) (*types.Transaction, error) {
+	return _Bank.Contract.WithdrawMoney(&_Bank.TransactOpts, id)
 }
 
-// WithdrawMoney is a paid mutator transaction binding the contract method 0xac446002.
+// WithdrawMoneyTo is a paid mutator transaction binding the contract method 0xe883c06a.
 //
-// Solidity: function withdrawMoney() returns()
-func (_Bank *BankTransactor) WithdrawMoney(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _Bank.contract.Transact(opts, "withdrawMoney")
+// Solidity: function withdrawMoneyTo(string id, address _to) payable returns()
+func (_Bank *BankTransactor) WithdrawMoneyTo(opts *bind.TransactOpts, id string, _to common.Address) (*types.Transaction, error) {
+	return _Bank.contract.Transact(opts, "withdrawMoneyTo", id, _to)
 }
 
-// WithdrawMoney is a paid mutator transaction binding the contract method 0xac446002.
+// WithdrawMoneyTo is a paid mutator transaction binding the contract method 0xe883c06a.
 //
-// Solidity: function withdrawMoney() returns()
-func (_Bank *BankSession) WithdrawMoney() (*types.Transaction, error) {
-	return _Bank.Contract.WithdrawMoney(&_Bank.TransactOpts)
+// Solidity: function withdrawMoneyTo(string id, address _to) payable returns()
+func (_Bank *BankSession) WithdrawMoneyTo(id string, _to common.Address) (*types.Transaction, error) {
+	return _Bank.Contract.WithdrawMoneyTo(&_Bank.TransactOpts, id, _to)
 }
 
-// WithdrawMoney is a paid mutator transaction binding the contract method 0xac446002.
+// WithdrawMoneyTo is a paid mutator transaction binding the contract method 0xe883c06a.
 //
-// Solidity: function withdrawMoney() returns()
-func (_Bank *BankTransactorSession) WithdrawMoney() (*types.Transaction, error) {
-	return _Bank.Contract.WithdrawMoney(&_Bank.TransactOpts)
+// Solidity: function withdrawMoneyTo(string id, address _to) payable returns()
+func (_Bank *BankTransactorSession) WithdrawMoneyTo(id string, _to common.Address) (*types.Transaction, error) {
+	return _Bank.Contract.WithdrawMoneyTo(&_Bank.TransactOpts, id, _to)
 }
 
 // BankBalanceReceivedIterator is returned from FilterBalanceReceived and is used to iterate over the raw logs and unpacked data for BalanceReceived events raised by the Bank contract.
@@ -751,12 +773,13 @@ func (it *BankOperationsExecutedIterator) Close() error {
 // BankOperationsExecuted represents a OperationsExecuted event raised by the Bank contract.
 type BankOperationsExecuted struct {
 	Arg0 *big.Int
+	Arg1 *big.Int
 	Raw  types.Log // Blockchain specific contextual infos
 }
 
-// FilterOperationsExecuted is a free log retrieval operation binding the contract event 0x45b1c2f5c9e32511e6eb1772825abe442d6058ea66dd4e139a8fcc84b7a3c712.
+// FilterOperationsExecuted is a free log retrieval operation binding the contract event 0xef1c94cbc35308081c9f68ac9090ed940be17995b42a7c9788d6854336e51fb2.
 //
-// Solidity: event OperationsExecuted(uint256 arg0)
+// Solidity: event OperationsExecuted(uint256 arg0, uint256 arg1)
 func (_Bank *BankFilterer) FilterOperationsExecuted(opts *bind.FilterOpts) (*BankOperationsExecutedIterator, error) {
 
 	logs, sub, err := _Bank.contract.FilterLogs(opts, "OperationsExecuted")
@@ -766,9 +789,9 @@ func (_Bank *BankFilterer) FilterOperationsExecuted(opts *bind.FilterOpts) (*Ban
 	return &BankOperationsExecutedIterator{contract: _Bank.contract, event: "OperationsExecuted", logs: logs, sub: sub}, nil
 }
 
-// WatchOperationsExecuted is a free log subscription operation binding the contract event 0x45b1c2f5c9e32511e6eb1772825abe442d6058ea66dd4e139a8fcc84b7a3c712.
+// WatchOperationsExecuted is a free log subscription operation binding the contract event 0xef1c94cbc35308081c9f68ac9090ed940be17995b42a7c9788d6854336e51fb2.
 //
-// Solidity: event OperationsExecuted(uint256 arg0)
+// Solidity: event OperationsExecuted(uint256 arg0, uint256 arg1)
 func (_Bank *BankFilterer) WatchOperationsExecuted(opts *bind.WatchOpts, sink chan<- *BankOperationsExecuted) (event.Subscription, error) {
 
 	logs, sub, err := _Bank.contract.WatchLogs(opts, "OperationsExecuted")
@@ -803,9 +826,9 @@ func (_Bank *BankFilterer) WatchOperationsExecuted(opts *bind.WatchOpts, sink ch
 	}), nil
 }
 
-// ParseOperationsExecuted is a log parse operation binding the contract event 0x45b1c2f5c9e32511e6eb1772825abe442d6058ea66dd4e139a8fcc84b7a3c712.
+// ParseOperationsExecuted is a log parse operation binding the contract event 0xef1c94cbc35308081c9f68ac9090ed940be17995b42a7c9788d6854336e51fb2.
 //
-// Solidity: event OperationsExecuted(uint256 arg0)
+// Solidity: event OperationsExecuted(uint256 arg0, uint256 arg1)
 func (_Bank *BankFilterer) ParseOperationsExecuted(log types.Log) (*BankOperationsExecuted, error) {
 	event := new(BankOperationsExecuted)
 	if err := _Bank.contract.UnpackLog(event, "OperationsExecuted", log); err != nil {

@@ -20,10 +20,11 @@ import (
  */
 
 func watchOperationsExecutedEvents(client *ethclient.Client, contractAddr common.Address, stop chan struct{}) {
+	eventType := "OperationsExecuted"
 	// get a reference to the contract abi
 	parsed, err := abi.JSON(strings.NewReader(contracts.BankMetaData.ABI))
 	if err != nil {
-		LogFatal("Unable to get the ABI for the contract:", err)
+		LogFatal("Unable to get the ABI for the contract: %v", err)
 	}
 
 	// get a reference to the *bind.BoundContract of the existing contract
@@ -31,22 +32,23 @@ func watchOperationsExecutedEvents(client *ethclient.Client, contractAddr common
 
 	// configure a watcher for PrintHash events
 	watchOpts := bind.WatchOpts{Context: context.Background()}
-	logs, sub, err := bc.WatchLogs(&watchOpts, "OperationsExecuted")
+	logs, sub, err := bc.WatchLogs(&watchOpts, eventType)
 	defer sub.Unsubscribe()
 
 	if err != nil {
-		LogFatal("Error subscribing to contract Events (OperationsExecuted)", err)
+		LogFatal("Error subscribing to contract Events (%v): %v", eventType, err)
 	}
-	Log("Logging thread: Listening for OperationsExecuted events")
+	Log("Logging thread: Listening for %v events", eventType)
 
 	for {
 		select {
 		case logentry := <-logs:
 			event := new(contracts.BankOperationsExecuted)
-			if err := bc.UnpackLog(event, "OperationsExecuted", logentry); err != nil {
-				LogError("Error decoding log event:", logentry, err)
+			if err := bc.UnpackLog(event, eventType, logentry); err != nil {
+				LogError("Error decoding log [%v] event: %v", logentry, err)
 			}
-			Log("[BankOperationsExecuted Event]: Value: %v", event.Arg0)
+			Log("{ \"event\":\"%v\", \"trx_operations\":\"%v\", \"contract_balance\":\"%v\" } ", eventType, event.Arg0, event.Arg1)
+
 		case err := <-sub.Err():
 			LogError("Error received in the subscription channel:", err)
 		case <-stop:
@@ -154,7 +156,7 @@ func watchPrintConfirmation(client *ethclient.Client, contractAddr common.Addres
 			tFin := time.Now().UnixNano() / latency_factor // check latency_factor_unity
 			event := new(contracts.BankPrintConfirmation)
 			if err := bc.UnpackLog(event, eventName, logentry); err != nil {
-				LogError("Error decoding log event:", logentry, err)
+				LogError("Error decoding [%v] log event: %v", logentry, err)
 			}
 			tIni, ok := requestTimeMap.LoadAndDelete(event.Arg0) // the value is no longer needed, release memory
 			if !ok {
@@ -167,7 +169,7 @@ func watchPrintConfirmation(client *ethclient.Client, contractAddr common.Addres
 				continue
 			}
 			latency_time_units := (tFin - tIniTyped)
-			LogDebug("{ \"event\":\"%v\", \"trx_id\":\"%v\", \"trx_number\":\"%v\",  \"latency\": %v  } ", event.Arg0, event.Arg0, event.Arg1, latency_time_units)
+			LogDebug("{ \"event\":\"%v\", \"trx_id\":\"%v\", \"trx_number\":\"%v\",  \"latency\": %v  } ", eventName, event.Arg0, event.Arg1, latency_time_units)
 			stat.StoreLatencySample(latency_time_units)
 		case err := <-sub.Err():
 			LogError("Error received in the subscription channel:", err)

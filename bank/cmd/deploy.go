@@ -18,15 +18,12 @@ package cmd
 import (
 	"context"
 	"crypto/ecdsa"
-	"fmt"
 	"math/big"
 
-	// "time"
 
 	"github.com/danielporto/ethereum-smartcontract-snippet/bank/contracts"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 
-	// "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
@@ -42,7 +39,7 @@ Quorum blochckain network.
 Example:
 ./bank deploy --host 192.168.10.166 --port 22000 --key "1be3b50b31734be48452c29d714941ba165ef0cbf3ccea8ca16c45e3d8d45fb0"`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("deploy called")
+		Log("deploy called")
 		deployBank(key, host, port)
 	},
 }
@@ -86,12 +83,12 @@ func deployBank(key, host, port string) (string, uint64, *big.Int) {
 	url := "ws://" + host + ":" + port
 	conn, err := ethclient.Dial(url)
 	if err != nil {
-		LogFatal("Failed to connect to ethereum node", err)
+		LogFatal("Failed to connect to ethereum node: %v", err)
 	}
 
 	privateKey, err := crypto.HexToECDSA(key)
 	if err != nil {
-		LogFatal("Error converting the private key from Hex to ECDSA", err)
+		LogFatal("Error converting the private key from Hex to ECDSA %v", err)
 	}
 
 	publicKey := privateKey.Public()
@@ -103,25 +100,26 @@ func deployBank(key, host, port string) (string, uint64, *big.Int) {
 	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
 	nonce, err := conn.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
-		LogFatal("Error while getting a new nonce", err)
+		LogFatal("Error while getting a new nonce: %v", err)
 	}
-	fmt.Printf("Nonce: %v\n", nonce)
+	Log("Nonce: %v", nonce)
 
 	gasPrice, err := conn.SuggestGasPrice(context.Background())
 	if err != nil {
-		LogFatal("Error while trying to get the gas price", err)
+		LogFatal("Error while trying to get the gas price: %v", err)
 	}
-	fmt.Println("Gas price:", gasPrice)
+	Log("Gas price: %v", gasPrice)
 
 	auth := bind.NewKeyedTransactor(privateKey)
 	auth.Nonce = big.NewInt(int64(nonce))
 	auth.Value = big.NewInt(0)
-	auth.GasLimit = uint64(300000)
+	auth.GasLimit = uint64(trxgaslimit)
 	auth.GasPrice = gasPrice
 
+	Log("Gas limit: %v", auth.GasLimit)
 	address, tx, instance, err := contracts.DeployBank(auth, conn)
 	if err != nil {
-		LogFatal("Error deploying bank contract", err)
+		LogFatal("Error deploying bank contract: %v", err)
 	}
 
 	// check receipt
@@ -129,8 +127,8 @@ func deployBank(key, host, port string) (string, uint64, *big.Int) {
 	// 	LogFatal("Error: impossible to verify the transaction: ", tx)
 	// }
 
-	Log("Transaction address:", tx.Hash().Hex())
-	Log("Contract address", address.Hex())
+	Log("Transaction address: %v", tx.Hash().Hex())
+	Log("Contract address: %v", address.Hex())
 	Log("Contract deployed")
 
 	_ = instance

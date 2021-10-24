@@ -94,7 +94,7 @@ bank workload -o [transfer|deploy|mixed] \
 
 		switch operation {
 		case "transfer":
-			workloadTransfer()
+			workloadDirectTransfer()
 		case "deploy":
 			workloadDeploy()
 		case "mixed":
@@ -121,7 +121,7 @@ func init() {
 	workloadCmd.MarkPersistentFlagRequired("wallets")
 	workloadCmd.PersistentFlags().IntVarP(&origin, "origin", "", -1, "index of source keys list (-1 selects a random origin key)")
 	workloadCmd.PersistentFlags().IntVarP(&target, "target", "", -1, "index of destination address (-1 will choose a random target wallet)")
-	workloadCmd.PersistentFlags().IntVarP(&money, "money", "", 1000000000000, "Amount of money to transfer between accounts")
+	workloadCmd.PersistentFlags().Int64VarP(&money, "money", "", 1000000000000, "Amount of money to transfer between accounts")
 	workloadCmd.PersistentFlags().StringVarP(&client_id, "id", "", "undefined", "client identifier")
 	workloadCmd.PersistentFlags().BoolVarP(&timeline, "timeline", "", false, "print a timeline every second")
 
@@ -310,13 +310,12 @@ func workloadDeploy() {
 	time.Sleep(10 * time.Second)
 
 }
-
 /**********************************************************************************************************************
 * The transfer workload install a single contract and issue operations to transfer from one wallet to another
 * It also emits a log with a value transferred.
 * The logs allow for detecting byzantine faults that could be possible not captured.
 ***********************************************************************************************************************/
-func transfer(pk *ecdsa.PrivateKey, instance *contracts.Bank, gasPrice *big.Int, nonces <-chan uint64, wg *sync.WaitGroup, threadid int) {
+func contractTransfer(pk *ecdsa.PrivateKey, instance *contracts.Bank, gasPrice *big.Int, nonces <-chan uint64, wg *sync.WaitGroup, threadid int) {
 	defer wg.Done()
 	total_transactions := 0
 	Log("Thread %v STARTED - issuing transfer transactions", threadid)
@@ -336,7 +335,7 @@ func transfer(pk *ecdsa.PrivateKey, instance *contracts.Bank, gasPrice *big.Int,
 
 		id := fmt.Sprintf("%v_tx_%v", client_id, nonce)
 		tIni_us := time.Now().UnixNano() / latency_factor // get the timestamp in microsseconds
-		tx, err := instance.TransferMoneyTo(auth, common.HexToAddress(wallets[target]), id)
+		tx, err := instance.Deposit(auth, id)
 		if err != nil {
 			LogFatal("Failed to call transfer transaction method of bank contract. Check the Gas limit [%v] for this transaction: %v", auth.GasLimit, err)
 
@@ -350,7 +349,137 @@ func transfer(pk *ecdsa.PrivateKey, instance *contracts.Bank, gasPrice *big.Int,
 	Log("Thread %v FINISHED - transfer transactions issued : %v", threadid, total_transactions)
 }
 
-func workloadTransfer() {
+func workloadContractTransfer() {
+	nonceStream := make(chan uint64)
+	wg := sync.WaitGroup{}
+
+	// 1. Initialize a connection
+	url := "ws://" + host + ":" + port
+	Log("Running contract deposit/transfer workload")
+	Log("Connecting to ethereum network: %v", url)
+
+	client, err := ethclient.Dial(url)
+	if err != nil {
+		LogFatal("Failed to connect to ethereum node: %v", err)
+	}
+
+	// 2. Load credentials
+	// get credentials to write
+	// from ganache the private key is in the key icon of any account/wallet
+	// ECDSA (elyptic curve DSA is the standard used by ethereum)
+	privateKey, err := crypto.HexToECDSA(keys[origin])
+	if err != nil {
+		LogFatal("Error converting the private key from Hex to ECDSA: %v", err)
+	}
+
+	publicKey := privateKey.Public()
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	if !ok {
+		LogFatal("Error casting public key to ECDSA")
+	}
+
+	//now get the account of that private key
+	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
+
+	//3. configure nonce (prevent replay attacks with a user specific nonce)
+	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
+	if err != nil {
+		LogFatal("Impossible to get a nonce for account: %v", err)
+	}
+	//4. configure gasPrice
+	gasPrice, err := client.SuggestGasPrice(context.Background())
+	if err != nil {
+		LogFatal("Unable to get a gas price: %v", err)
+	}
+
+	// deploy a new contract
+	// 4. setup an authenticated transactor with info from credentials and connection configuration
+	auth := bind.NewKeyedTransactor(privateKey)
+	auth.Nonce = big.NewInt(int64(nonce))
+	auth.Value = big.NewInt(0)          // not transferring funds, just deploying contract operation
+	auth.GasLimit = uint64(trxgaslimit) // max value for this transaction
+	auth.GasPrice = gasPrice
+	contractAddr, _, instance, err := contracts.DeployBank(auth, client)
+	if err != nil {
+		LogFatal("Impossible to initialize a bank contract for this workload: %v", err)
+	}
+	Log("Wait for the 5 seconds (blocks) while contract is be mined before issuing operations.")
+	time.Sleep(5 * time.Second)
+
+	doneWatchingLogs := make(chan struct{})
+
+	if !disable_events {
+		go watchContractEvents(contractAddr, doneWatchingLogs)
+	} else {
+		Log("Event watchers are disabled.")
+	}
+
+	// use the contract to run the transfer workload
+	go generateNonceAtRate(client, fromAddress, count, duration, nonceStream, maxrate)
+	for i := 0; i < threads; i++ {
+		wg.Add(1)
+		go contractTransfer(privateKey, instance, gasPrice, nonceStream, &wg, i)
+	}
+	wg.Wait()
+
+	// time's up or #operations has finished
+	Log("Experiment FINISHED, wait for the 10 seconds to ensure pending transactions are processed")
+	time.Sleep(10 * time.Second)
+	lastnonce, err := client.PendingNonceAt(context.Background(), fromAddress)
+	if err != nil {
+		LogFatal("Impossible to get a nonce for final report: %v", err)
+	}
+	auth.Nonce = big.NewInt(int64(lastnonce))
+	instance.LogTransferOperations(auth)
+	Log("Wait 10 seconds to receive the final log")
+	time.Sleep(10 * time.Second)
+	close(doneWatchingLogs)
+	//wait for logs to be closed
+	time.Sleep(10 * time.Second)
+	stats.PrintStatsMap()
+	Log(stats.ReportStats())
+}
+
+/**********************************************************************************************************************
+* The transfer workload install a single contract and issue operations to transfer from one wallet to another
+* It also emits a log with a value transferred.
+* The logs allow for detecting byzantine faults that could be possible not captured.
+***********************************************************************************************************************/
+func directTransfer(pk *ecdsa.PrivateKey, instance *contracts.Bank, gasPrice *big.Int, nonces <-chan uint64, wg *sync.WaitGroup, threadid int) {
+	defer wg.Done()
+	total_transactions := 0
+	Log("Thread %v STARTED - issuing transfer transactions", threadid)
+
+	for nonce := range nonces {
+		auth := bind.NewKeyedTransactor(pk)
+		auth.Nonce = big.NewInt(int64(nonce))
+		auth.Value = big.NewInt(int64(money))
+		auth.GasLimit = uint64(trxgaslimit)
+		auth.GasPrice = gasPrice
+
+		if nonce%uint64(checkpoint) == 0 {
+			Log("Thread %v - transfer transactions issued : %v", threadid, total_transactions)
+			instance.LogTransferOperations(auth)
+			continue // get another nonce
+		}
+
+		id := fmt.Sprintf("%v_tx_%v", client_id, nonce)
+		tIni_us := time.Now().UnixNano() / latency_factor // get the timestamp in microsseconds
+		tx, err := instance.DirectTransferTo(auth, common.HexToAddress(wallets[target]), id)
+		if err != nil {
+			LogFatal("Failed to call transfer transaction method of bank contract. Check the Gas limit [%v] for this transaction: %v", auth.GasLimit, err)
+
+		}
+		requestTimeMap.Store(id, tIni_us) //stores the timestamp in which the request was made (this will be updated by the event function)
+
+		total_transactions++
+		LogDebug("nonce %v, tx sent: %s", nonce, tx.Hash().Hex())
+
+	}
+	Log("Thread %v FINISHED - transfer transactions issued : %v", threadid, total_transactions)
+}
+
+func workloadDirectTransfer() {
 	nonceStream := make(chan uint64)
 	wg := sync.WaitGroup{}
 
@@ -419,7 +548,7 @@ func workloadTransfer() {
 	go generateNonceAtRate(client, fromAddress, count, duration, nonceStream, maxrate)
 	for i := 0; i < threads; i++ {
 		wg.Add(1)
-		go transfer(privateKey, instance, gasPrice, nonceStream, &wg, i)
+		go directTransfer(privateKey, instance, gasPrice, nonceStream, &wg, i)
 	}
 	wg.Wait()
 
@@ -452,7 +581,7 @@ func mixed(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.Bank, 
 	for nonce := range nonces {
 		auth := bind.NewKeyedTransactor(pk)
 		auth.Nonce = big.NewInt(int64(nonce))
-		auth.Value = big.NewInt(0)
+		auth.Value = big.NewInt(money)
 		auth.GasLimit = uint64(trxgaslimit)
 		auth.GasPrice = gasPrice
 
@@ -471,7 +600,7 @@ func mixed(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.Bank, 
 			LogDebug("Transaction address: %v", address.Hex())
 		} else {
 			id := fmt.Sprintf("%v_tx_%v", client_id, nonce)
-			tx, err := instance.TransferMoneyTo(auth, common.HexToAddress(wallets[target]), id)
+			tx, err := instance.DirectTransferTo(auth, common.HexToAddress(wallets[target]), id)
 			if err != nil {
 				LogFatal("Failed to call transaction method: %v", err)
 			}

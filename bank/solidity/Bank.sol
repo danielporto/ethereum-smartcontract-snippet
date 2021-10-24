@@ -13,12 +13,12 @@ contract Bank {
 
     event BalanceReceived(uint);
     event BalanceTransferred(uint);
-    event OperationsExecuted(uint);
+    event OperationsExecuted(uint,uint);
     event PrintConfirmation(string,uint); //trx_id, total_operations
 
     // emit the total operations in the log
     function logTransferOperations() public {
-        emit OperationsExecuted(operations);
+        emit OperationsExecuted(operations,address(this).balance);
     }
 
     // send money to the contract
@@ -27,22 +27,30 @@ contract Bank {
         emit BalanceReceived(msg.value);
     }
 
-    // withdraw all money from the contract to the sender address
-    function withdrawMoney() public {
-        address payable to = payable(msg.sender);
-        to.transfer(getBalance());
+    // send money to the contract
+    function deposit(string calldata id) public payable {
+        balanceReceived += msg.value;
+        emit PrintConfirmation(id, operations);
     }
 
 
-    // pay order a payment from contract balance to another account
-    function payMoneyTo(address payable _to) public payable {
+    // withdraw all money from the contract to the sender address
+    function withdrawMoney(string calldata id) public {
+        address payable to = payable(msg.sender);
+        to.transfer(getBalance());
+        emit PrintConfirmation(id, operations);
+    }
+
+
+    // withdraw all money from the contract to a given address
+    function withdrawMoneyTo(string calldata id, address payable _to) public payable {
         _to.transfer(msg.value);
-        emit BalanceTransferred(msg.value);
+        emit PrintConfirmation(id, operations);
     }
 
 
     // transfer money to another account via smartcontract
-    function transferMoneyTo(address payable _to, string calldata id) public payable {
+    function directTransferTo(address payable _to, string calldata id) public payable {
         _to.transfer(msg.value);
         operations +=1;
         //emit BalanceTransferred(msg.value); //print amount transferred
