@@ -19,8 +19,8 @@ package cmd
 import (
 	"fmt"
 	"os"
-
-	log "github.com/sirupsen/logrus"
+	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -39,6 +39,48 @@ var trxgaslimit int32 //used for suggesting the fee for the transaction
 var duration int //used for duration of experiment
 var threads int      // used for workload
 var verbosity string //set log verbosity
+var client_id string  // client identifier to match transaction response
+var debug bool
+
+var latency_factor_unity string
+var latency_factor int64
+
+func Log(message string, a ...interface{}) {
+	var m string
+	m = fmt.Sprintf(message, a...)
+
+	now := time.Now()
+	location, _ := time.LoadLocation("Europe/Lisbon")
+	now_ts_ms := now.UnixNano() / 1_000_000
+	now_date := now.In(location).Format("2006-01-02 15:04:05")
+	fmt.Printf("%v|%v [YCSBClient]: %v\n", now_date, now_ts_ms, m)
+}
+
+func LogWtag(tag, message string, a ...interface{}) {
+	var m string
+	m = fmt.Sprintf(message, a...)
+
+	now := time.Now()
+	location, _ := time.LoadLocation("Europe/Lisbon")
+	now_ts_ms := now.UnixNano() / 1_000_000
+	now_date := now.In(location).Format("2006-01-02 15:04:05")
+	fmt.Printf("%v|%v [YCSBClient]: %v - %v\n", now_date, now_ts_ms, tag, m)
+}
+
+func LogFatal(message string, a ...interface{}) {
+	LogWtag("Fatal Error", message, a...)
+	os.Exit(-1)
+}
+func LogError(message string, a ...interface{}) {
+	LogWtag("Error", message, a...)
+}
+
+func LogDebug(message string, a ...interface{}) {
+	if !debug {
+		return
+	}
+	LogWtag("Debug", message, a...)
+}
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -47,15 +89,24 @@ var rootCmd = &cobra.Command{
 	Long: `A golang client that interact with a quorum network to deploy a smartcontract
 that maintains a key value store. It installs, change and read the KV store from the blockchain. 
 For example:
-ycsb deploy --host 192.168.10.166 --port 22000 \
-   			--key "1be3b50b31734be48452c29d714941ba165ef0cbf3ccea8ca16c45e3d8d45fb0"`,
+ycsb workload --operation ycsb --host 192.168.10.166 --port 22000 \
+   			--key "1be3b50b31734be48452c29d714941ba165ef0cbf3ccea8ca16c45e3d8d45fb0" --id "client_01"`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		lvl, err := log.ParseLevel(verbosity)
-		if err != nil {
-			log.Fatal("Invalid log level", err)
+		if strings.TrimSpace(strings.ToUpper(verbosity)) == "DEBUG" {
+			debug = true
+			LogDebug("Debug mode enabled")
+
 		}
-		log.SetLevel(lvl)
-		log.Debugf("Debug mode enabled")
+
+
+		switch latency_factor_unity {
+		case "microseconds":
+			latency_factor = 1_000
+			Log("Latency for request/reply are computed in  microseconds ")
+		case "milliseconds":
+			latency_factor = 1_000_000
+			Log("Latency for request/reply are computed in  milliseconds ")
+		}
 	},
 }
 
@@ -88,6 +139,8 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&disable_events, "events", "", false, "url of the server to connect to")
 	rootCmd.PersistentFlags().StringVarP(&key, "key", "", "", "key of a network node")
 	rootCmd.MarkPersistentFlagRequired("key")
+	rootCmd.PersistentFlags().StringVarP(&latency_factor_unity, "req_latency_unity", "", "microseconds", "latency between the request and reply: microseconds/milliseconds")
+
 }
 
 // initConfig reads in config file and ENV variables if set.

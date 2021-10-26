@@ -30,13 +30,13 @@ var (
 
 // KVstoreMetaData contains all meta data concerning the KVstore contract.
 var KVstoreMetaData = &bind.MetaData{
-	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"PrintInserts\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"name\":\"PrintKVAck\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"PrintTotalInserts\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_key\",\"type\":\"string\"}],\"name\":\"get\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"_value\",\"type\":\"string\"}],\"name\":\"set\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"PrintConfirmation\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"PrintInserts\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"name\":\"PrintKVAck\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"PrintTotalInserts\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_key\",\"type\":\"string\"}],\"name\":\"get\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_key\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"_value\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"id\",\"type\":\"string\"}],\"name\":\"set\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
 	Sigs: map[string]string{
 		"643e1fee": "PrintTotalInserts()",
 		"693ec85e": "get(string)",
-		"e942b516": "set(string,string)",
+		"da465d74": "set(string,string,string)",
 	},
-	Bin: "0x6080604052600060015534801561001557600080fd5b5061053f806100256000396000f3fe608060405234801561001057600080fd5b50600436106100415760003560e01c8063643e1fee14610046578063693ec85e14610050578063e942b51614610079575b600080fd5b61004e61008c565b005b61006361005e366004610340565b6100c9565b60405161007091906103d9565b60405180910390f35b61004e6100873660046103f3565b610179565b7f09fa0639e8315051b795e692c47314cab4d06c7baa13ae2a68d0669cea279a526001546040516100bf91815260200190565b60405180910390a1565b60606000826040516100db9190610457565b908152602001604051809103902080546100f490610473565b80601f016020809104026020016040519081016040528092919081815260200182805461012090610473565b801561016d5780601f106101425761010080835404028352916020019161016d565b820191906000526020600020905b81548152906001019060200180831161015057829003601f168201915b50505050509050919050565b8060008360405161018a9190610457565b908152602001604051809103902090805190602001906101ab929190610204565b5060018060008282546101be91906104ae565b90915550506001546040517fdf4afc806a701f112b8f38868c22361c40e980b57f7c0d0506d26355a45a0c4e916101f891859085906104d4565b60405180910390a15050565b82805461021090610473565b90600052602060002090601f0160209004810192826102325760008555610278565b82601f1061024b57805160ff1916838001178555610278565b82800160010185558215610278579182015b8281111561027857825182559160200191906001019061025d565b50610284929150610288565b5090565b5b808211156102845760008155600101610289565b634e487b7160e01b600052604160045260246000fd5b600082601f8301126102c457600080fd5b813567ffffffffffffffff808211156102df576102df61029d565b604051601f8301601f19908116603f011681019082821181831017156103075761030761029d565b8160405283815286602085880101111561032057600080fd5b836020870160208301376000602085830101528094505050505092915050565b60006020828403121561035257600080fd5b813567ffffffffffffffff81111561036957600080fd5b610375848285016102b3565b949350505050565b60005b83811015610398578181015183820152602001610380565b838111156103a7576000848401525b50505050565b600081518084526103c581602086016020860161037d565b601f01601f19169290920160200192915050565b6020815260006103ec60208301846103ad565b9392505050565b6000806040838503121561040657600080fd5b823567ffffffffffffffff8082111561041e57600080fd5b61042a868387016102b3565b9350602085013591508082111561044057600080fd5b5061044d858286016102b3565b9150509250929050565b6000825161046981846020870161037d565b9190910192915050565b600181811c9082168061048757607f821691505b602082108114156104a857634e487b7160e01b600052602260045260246000fd5b50919050565b600082198211156104cf57634e487b7160e01b600052601160045260246000fd5b500190565b8381526060602082015260006104ed60608301856103ad565b82810360408401526104ff81856103ad565b969550505050505056fea2646970667358221220dd50bef7d1c2ce95c8597809b7731816e2f58a25bbbaa1a1374a681499a949b564736f6c63430008090033",
+	Bin: "0x6080604052600060015534801561001557600080fd5b50610584806100256000396000f3fe608060405234801561001057600080fd5b50600436106100415760003560e01c8063643e1fee14610046578063693ec85e14610050578063da465d7414610079575b600080fd5b61004e61008c565b005b61006361005e366004610342565b6100c9565b60405161007091906103af565b60405180910390f35b61004e6100873660046103e2565b610179565b7f09fa0639e8315051b795e692c47314cab4d06c7baa13ae2a68d0669cea279a526001546040516100bf91815260200190565b60405180910390a1565b60606000826040516100db9190610498565b908152602001604051809103902080546100f4906104b4565b80601f0160208091040260200160405190810160405280929190818152602001828054610120906104b4565b801561016d5780601f106101425761010080835404028352916020019161016d565b820191906000526020600020905b81548152906001019060200180831161015057829003601f168201915b50505050509050919050565b8260008560405161018a9190610498565b908152602001604051809103902090805190602001906101ab929190610206565b5060018060008282546101be91906104ef565b90915550506001546040517fa5b236924ed143061aeda12329df0e5b7ecf459631fbbf10a8f604cc18787811916101f89185918591610515565b60405180910390a150505050565b828054610212906104b4565b90600052602060002090601f016020900481019282610234576000855561027a565b82601f1061024d57805160ff191683800117855561027a565b8280016001018555821561027a579182015b8281111561027a57825182559160200191906001019061025f565b5061028692915061028a565b5090565b5b80821115610286576000815560010161028b565b634e487b7160e01b600052604160045260246000fd5b600082601f8301126102c657600080fd5b813567ffffffffffffffff808211156102e1576102e161029f565b604051601f8301601f19908116603f011681019082821181831017156103095761030961029f565b8160405283815286602085880101111561032257600080fd5b836020870160208301376000602085830101528094505050505092915050565b60006020828403121561035457600080fd5b813567ffffffffffffffff81111561036b57600080fd5b610377848285016102b5565b949350505050565b60005b8381101561039a578181015183820152602001610382565b838111156103a9576000848401525b50505050565b60208152600082518060208401526103ce81604085016020870161037f565b601f01601f19169190910160400192915050565b600080600080606085870312156103f857600080fd5b843567ffffffffffffffff8082111561041057600080fd5b61041c888389016102b5565b9550602087013591508082111561043257600080fd5b61043e888389016102b5565b9450604087013591508082111561045457600080fd5b818701915087601f83011261046857600080fd5b81358181111561047757600080fd5b88602082850101111561048957600080fd5b95989497505060200194505050565b600082516104aa81846020870161037f565b9190910192915050565b600181811c908216806104c857607f821691505b602082108114156104e957634e487b7160e01b600052602260045260246000fd5b50919050565b6000821982111561051057634e487b7160e01b600052601160045260246000fd5b500190565b604081528260408201528284606083013760006060848301015260006060601f19601f860116830101905082602083015294935050505056fea26469706673582212204c1c0b4379c104e6db788d63a2b6f92627dd5825feb0b86cd7e7a99ad5097dd664736f6c63430008090033",
 }
 
 // KVstoreABI is the input ABI used to generate the binding from.
@@ -262,25 +262,160 @@ func (_KVstore *KVstoreTransactorSession) PrintTotalInserts() (*types.Transactio
 	return _KVstore.Contract.PrintTotalInserts(&_KVstore.TransactOpts)
 }
 
-// Set is a paid mutator transaction binding the contract method 0xe942b516.
+// Set is a paid mutator transaction binding the contract method 0xda465d74.
 //
-// Solidity: function set(string _key, string _value) returns()
-func (_KVstore *KVstoreTransactor) Set(opts *bind.TransactOpts, _key string, _value string) (*types.Transaction, error) {
-	return _KVstore.contract.Transact(opts, "set", _key, _value)
+// Solidity: function set(string _key, string _value, string id) returns()
+func (_KVstore *KVstoreTransactor) Set(opts *bind.TransactOpts, _key string, _value string, id string) (*types.Transaction, error) {
+	return _KVstore.contract.Transact(opts, "set", _key, _value, id)
 }
 
-// Set is a paid mutator transaction binding the contract method 0xe942b516.
+// Set is a paid mutator transaction binding the contract method 0xda465d74.
 //
-// Solidity: function set(string _key, string _value) returns()
-func (_KVstore *KVstoreSession) Set(_key string, _value string) (*types.Transaction, error) {
-	return _KVstore.Contract.Set(&_KVstore.TransactOpts, _key, _value)
+// Solidity: function set(string _key, string _value, string id) returns()
+func (_KVstore *KVstoreSession) Set(_key string, _value string, id string) (*types.Transaction, error) {
+	return _KVstore.Contract.Set(&_KVstore.TransactOpts, _key, _value, id)
 }
 
-// Set is a paid mutator transaction binding the contract method 0xe942b516.
+// Set is a paid mutator transaction binding the contract method 0xda465d74.
 //
-// Solidity: function set(string _key, string _value) returns()
-func (_KVstore *KVstoreTransactorSession) Set(_key string, _value string) (*types.Transaction, error) {
-	return _KVstore.Contract.Set(&_KVstore.TransactOpts, _key, _value)
+// Solidity: function set(string _key, string _value, string id) returns()
+func (_KVstore *KVstoreTransactorSession) Set(_key string, _value string, id string) (*types.Transaction, error) {
+	return _KVstore.Contract.Set(&_KVstore.TransactOpts, _key, _value, id)
+}
+
+// KVstorePrintConfirmationIterator is returned from FilterPrintConfirmation and is used to iterate over the raw logs and unpacked data for PrintConfirmation events raised by the KVstore contract.
+type KVstorePrintConfirmationIterator struct {
+	Event *KVstorePrintConfirmation // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *KVstorePrintConfirmationIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(KVstorePrintConfirmation)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(KVstorePrintConfirmation)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *KVstorePrintConfirmationIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *KVstorePrintConfirmationIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// KVstorePrintConfirmation represents a PrintConfirmation event raised by the KVstore contract.
+type KVstorePrintConfirmation struct {
+	Arg0 string
+	Arg1 *big.Int
+	Raw  types.Log // Blockchain specific contextual infos
+}
+
+// FilterPrintConfirmation is a free log retrieval operation binding the contract event 0xa5b236924ed143061aeda12329df0e5b7ecf459631fbbf10a8f604cc18787811.
+//
+// Solidity: event PrintConfirmation(string arg0, uint256 arg1)
+func (_KVstore *KVstoreFilterer) FilterPrintConfirmation(opts *bind.FilterOpts) (*KVstorePrintConfirmationIterator, error) {
+
+	logs, sub, err := _KVstore.contract.FilterLogs(opts, "PrintConfirmation")
+	if err != nil {
+		return nil, err
+	}
+	return &KVstorePrintConfirmationIterator{contract: _KVstore.contract, event: "PrintConfirmation", logs: logs, sub: sub}, nil
+}
+
+// WatchPrintConfirmation is a free log subscription operation binding the contract event 0xa5b236924ed143061aeda12329df0e5b7ecf459631fbbf10a8f604cc18787811.
+//
+// Solidity: event PrintConfirmation(string arg0, uint256 arg1)
+func (_KVstore *KVstoreFilterer) WatchPrintConfirmation(opts *bind.WatchOpts, sink chan<- *KVstorePrintConfirmation) (event.Subscription, error) {
+
+	logs, sub, err := _KVstore.contract.WatchLogs(opts, "PrintConfirmation")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(KVstorePrintConfirmation)
+				if err := _KVstore.contract.UnpackLog(event, "PrintConfirmation", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParsePrintConfirmation is a log parse operation binding the contract event 0xa5b236924ed143061aeda12329df0e5b7ecf459631fbbf10a8f604cc18787811.
+//
+// Solidity: event PrintConfirmation(string arg0, uint256 arg1)
+func (_KVstore *KVstoreFilterer) ParsePrintConfirmation(log types.Log) (*KVstorePrintConfirmation, error) {
+	event := new(KVstorePrintConfirmation)
+	if err := _KVstore.contract.UnpackLog(event, "PrintConfirmation", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
 }
 
 // KVstorePrintInsertsIterator is returned from FilterPrintInserts and is used to iterate over the raw logs and unpacked data for PrintInserts events raised by the KVstore contract.
