@@ -67,12 +67,12 @@ func deployKVstore(key, url string) (string, uint64, *big.Int) {
 	log.Println("Connecting to ethereum network...")
 	conn, err := ethclient.Dial(url)
 	if err != nil {
-		log.Fatal("Failed to connect to ethereum node", err)
+		log.Fatal("Failed to connect to ethereum node: %v", err)
 	}
 
 	privateKey, err := crypto.HexToECDSA(key)
 	if err != nil {
-		log.Fatal("Error converting the private key from Hex to ECDSA", err)
+		log.Fatal("Error converting the private key from Hex to ECDSA %v", err)
 	}
 
 	publicKey := privateKey.Public()

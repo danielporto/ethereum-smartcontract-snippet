@@ -7,8 +7,9 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	log "github.com/sirupsen/logrus"
 	"strings"
+	"sync"
+	"time"
 )
 
 
@@ -22,7 +23,7 @@ func watchGetValueEvents(client *ethclient.Client, contractAddr common.Address, 
 	// get a reference to the contract abi
 	parsed, err := abi.JSON(strings.NewReader(contracts.CounterABI))
 	if err != nil {
-		log.Fatal("Unable to get the ABI for the contract:", err)
+		LogFatal("Unable to get the ABI for the contract: %v", err)
 	}
 
 	// get a reference to the *bind.BoundContract of the existing contract
@@ -34,20 +35,20 @@ func watchGetValueEvents(client *ethclient.Client, contractAddr common.Address, 
 	defer sub.Unsubscribe()
 
 	if err != nil {
-		log.Fatal("Error subscribing to contract Events (GetValue)", err)
+		LogFatal("Error subscribing to contract Events (GetValue) %v", err)
 	}
-	log.Infof("Logging thread: Listening for GetValueEvents")
+	Log("Logging thread: Listening for GetValueEvents")
 
 	for {
 		select {
 		case logentry := <-logs:
 			event := new(contracts.CounterGetValue)
 			if err := bc.UnpackLog(event, "GetValue", logentry); err != nil {
-				log.Error("Error decoding log event:", logentry, err)
+				LogError("Error decoding log event: %v, %v ", logentry, err)
 			}
-			log.Infof("[GetValue Event]: Value: %v", event.Arg0)
+			Log("[GetValue Event]: Value: %v", event.Arg0)
 		case err := <-sub.Err():
-			log.Error("Error received in the subscription channel:", err)
+			LogError("Error received in the subscription channel: %v", err)
 		case <-stop:
 			return
 		}
@@ -59,7 +60,7 @@ func watchIncrementEvents(client *ethclient.Client, contractAddr common.Address,
 	// get a reference to the contract abi
 	parsed, err := abi.JSON(strings.NewReader(contracts.CounterABI))
 	if err != nil {
-		log.Fatal("Unable to get the ABI for the contract:", err)
+		LogFatal("Unable to get the ABI for the contract: %v", err)
 	}
 
 	// get a reference to the *bind.BoundContract of the existing contract
@@ -71,20 +72,20 @@ func watchIncrementEvents(client *ethclient.Client, contractAddr common.Address,
 	defer sub.Unsubscribe()
 
 	if err != nil {
-		log.Fatal("Error subscribing to contract Events (Increment)", err)
+		LogFatal("Error subscribing to contract Events (Increment) %v", err)
 	}
-	log.Infof("Logging thread: Listening for IncrementEvents")
+	Log("Logging thread: Listening for IncrementEvents")
 
 	for {
 		select {
 		case logentry := <-logs:
 			event := new(contracts.CounterIncrement)
 			if err := bc.UnpackLog(event, "Increment", logentry); err != nil {
-				log.Error("Error decoding log event:", logentry, err)
+				LogError("Error decoding log event: %v, %v", logentry, err)
 			}
-			log.Infof("[Increment Event]: Value: %v", event.Arg0)
+			Log("[Increment Event]: Value: %v", event.Arg0)
 		case err := <-sub.Err():
-			log.Error("Error received in the subscription channel:", err)
+			LogError("Error received in the subscription channel: %v", err)
 		case <-stop:
 			return
 		}
@@ -95,7 +96,7 @@ func watchDecrementEvents(client *ethclient.Client,  contractAddr common.Address
 	// get a reference to the contract abi
 	parsed, err := abi.JSON(strings.NewReader(contracts.CounterABI))
 	if err != nil {
-		log.Fatal("Unable to get the ABI for the contract:", err)
+		LogFatal("Unable to get the ABI for the contract: %v", err)
 	}
 
 	// get a reference to the *bind.BoundContract of the existing contract
@@ -107,20 +108,69 @@ func watchDecrementEvents(client *ethclient.Client,  contractAddr common.Address
 	defer sub.Unsubscribe()
 
 	if err != nil {
-		log.Fatal("Error subscribing to contract Events (Decrement)", err)
+		LogFatal("Error subscribing to contract Events (Decrement)  %v", err)
 	}
-	log.Infof("Logging thread: Listening to DecrementEvents")
+	Log("Logging thread: Listening to DecrementEvents")
 
 	for {
 		select {
 		case logentry := <-logs:
 			event := new(contracts.CounterDecrement)
 			if err := bc.UnpackLog(event, "Decrement", logentry); err != nil {
-				log.Error("Error decoding log event:", logentry, err)
+				LogError("Error decoding log event: %v, %v", logentry, err)
 			}
-			log.Infof("[Decrement Event]: Value: %v", event.Arg0)
+			Log("[Decrement Event]: Value: %v", event.Arg0)
 		case err := <-sub.Err():
-			log.Error("Error received in the subscription channel:", err)
+			LogError("Error received in the subscription channel: %v", err)
+		case <-stop:
+			return
+		}
+	}
+}
+
+func watchPrintConfirmation(client *ethclient.Client, contractAddr common.Address, stop chan struct{}, requestTimeMap *sync.Map, stat *StatsStorage) {
+	eventName := "PrintConfirmation"
+	// get a reference to the contract abi
+	parsed, err := abi.JSON(strings.NewReader(contracts.CounterMetaData.ABI))
+	if err != nil {
+		LogFatal("Unable to get the ABI for the contract: %v", err)
+	}
+
+	// get a reference to the *bind.BoundContract of the existing contract
+	bc := bind.NewBoundContract(contractAddr, parsed, client, client, client)
+	// configure a watcher for events
+	watchOpts := bind.WatchOpts{Context: context.Background()}
+	logs, sub, err := bc.WatchLogs(&watchOpts, eventName)
+	defer sub.Unsubscribe()
+
+	if err != nil {
+		LogFatal("Error subscribing to contract Events ("+eventName+"): %v", err)
+	}
+	Log("Logging thread: Listening for "+eventName+" events")
+
+	for {
+		select {
+		case logentry := <-logs:
+			tFin := time.Now().UnixNano() / latency_factor // check latency_factor_unity
+			event := new(contracts.CounterPrintConfirmation)
+			if err := bc.UnpackLog(event, eventName, logentry); err != nil {
+				LogError("Error decoding [%v] log event: %v", logentry, err)
+			}
+			tIni, ok := requestTimeMap.LoadAndDelete(event.Arg0) // the value is no longer needed, release memory
+			if !ok {
+				// reply was received without a request. breaks causality.
+				LogError("Reply was received without a request. breaks causality:"+ "{ \"event\": \"%v\", \"trx_id\": \"%v\", \"trx_number\": \"%v\" }", eventName, event.Arg0, event.Arg1)
+			}
+			tIniTyped, ok := tIni.(int64)
+			if !ok {
+				LogError("Unable to convert timestamp type, ignoring entry")
+				continue
+			}
+			latency_time_units := (tFin - tIniTyped)
+			LogDebug("{ \"event\":\"%v\", \"trx_id\":\"%v\", \"trx_number\":\"%v\",  \"latency\": %v  } ", eventName, event.Arg0, event.Arg1, latency_time_units)
+			stat.StoreLatencySample(latency_time_units)
+		case err := <-sub.Err():
+			LogError("Error received in the subscription channel: %v", err)
 		case <-stop:
 			return
 		}

@@ -21,14 +21,8 @@ import (
 	"fmt"
 	"math/big"
 
-	log "github.com/sirupsen/logrus"
-
-	// "time"
-
 	"github.com/danielporto/ethereum-smartcontract-snippet/counter/contracts"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-
-	// "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
@@ -81,34 +75,34 @@ func init() {
 // }
 
 func deployCounter(key, host, port string) (string, uint64, *big.Int) {
-	log.Println("Connecting to ethereum network...")
+	Log("Connecting to ethereum network...")
 	url := "http://" + host + ":" + port
 	conn, err := ethclient.Dial(url)
 	if err != nil {
-		log.Fatal("Failed to connect to ethereum node", err)
+		LogFatal("Failed to connect to ethereum node: %v", err)
 	}
 
 	privateKey, err := crypto.HexToECDSA(key)
 	if err != nil {
-		log.Fatal("Error converting the private key from Hex to ECDSA", err)
+		LogFatal("Error converting the private key from Hex to ECDSA: %v", err)
 	}
 
 	publicKey := privateKey.Public()
 	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
 	if !ok {
-		log.Fatal("Error casting public key to ECDSA")
+		LogFatal("Error casting public key to ECDSA")
 	}
 
 	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
 	nonce, err := conn.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
-		log.Fatal("Error while getting a new nonce", err)
+		LogFatal("Error while getting a new nonce: %v", err)
 	}
 	fmt.Printf("Nonce: %v\n", nonce)
 
 	gasPrice, err := conn.SuggestGasPrice(context.Background())
 	if err != nil {
-		log.Fatal("Error while trying to get the gas price", err)
+		LogFatal("Error while trying to get the gas price: %v", err)
 	}
 	fmt.Println("Gas price:", gasPrice)
 
@@ -120,17 +114,17 @@ func deployCounter(key, host, port string) (string, uint64, *big.Int) {
 
 	address, tx, instance, err := contracts.DeployCounter(auth, conn)
 	if err != nil {
-		log.Fatal("Error deploying counter", err)
+		LogFatal("Error deploying counter: %v", err)
 	}
 
 	// check receipt
 	// if checkReceipt(conn, tx, 3) == false {
-	// 	log.Fatal("Error: impossible to verify the transaction: ", tx)
+	// 	LogFatal("Error: impossible to verify the transaction: ", tx)
 	// }
 
-	fmt.Println("Transaction address:", tx.Hash().Hex())
-	fmt.Println("Contract address", address.Hex())
-	fmt.Println("Contract deployed")
+	Log("Transaction address: %v", tx.Hash().Hex())
+	Log("Contract address %v", address.Hex())
+	Log("Contract deployed")
 
 	_ = instance
 	return address.Hex(), nonce, gasPrice

@@ -25,6 +25,7 @@ import (
 	"math/rand"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/danielporto/ethereum-smartcontract-snippet/kvstore/contracts"
@@ -45,6 +46,7 @@ var dbkeysize int
 var dbvaluesize int
 var checkpoint int
 var timeline bool
+var totalRequests int64
 
 var requestNanotimeMap sync.Map
 var stats StatsStorage
@@ -92,7 +94,11 @@ func init() {
 	workloadCmd.PersistentFlags().StringVarP(&operation, "operation", "", "deploy", "Issues operations of that type (deploy/kvstore/mixed) to the blockchain")
 	workloadCmd.PersistentFlags().IntVarP(&count, "count", "", 1, "Number of operations to be issued")
 	workloadCmd.PersistentFlags().IntVarP(&duration, "duration", "", 0, "Duration of the experiment in seconds")
-	workloadCmd.PersistentFlags().IntVarP(&threads, "threads", "", 1, "Number of threads")
+	// this is currently not supporting multi threads. for that we need multiple keys to generate
+	// nonces independently per key otherwise the will queue up after a max rate.
+	// instead, start multiple processes passing a different key
+	//workloadCmd.PersistentFlags().IntVarP(&threads, "threads", "", 1, "Number of threads")
+	threads=1
 	workloadCmd.PersistentFlags().IntVarP(&maxrate, "rate", "", 10, "Max operations per second for each thread (suggested value)")
 	workloadCmd.PersistentFlags().IntVarP(&checkpoint, "checkpoint", "", 5000, "Print total operations after X operations issued.")
 	workloadCmd.PersistentFlags().StringVarP(&client_id, "id", "", "undefined", "client identifier")
@@ -137,15 +143,17 @@ func generateNonce(init uint64, count, duration int, nonces chan<- uint64) {
 func generateNonceAtRate(client *ethclient.Client, fromAddress common.Address, count, duration int, nonces chan<- uint64, rate int) {
 	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
-		LogFatal("Impossible to get a nonce for account", err)
+		LogFatal("Impossible to get a nonce for account: %v", err)
 	}
 
-	if rate <= 0 {
-		LogFatal("Rate must be greater than 0")
+	var rl ratelimit.Limiter
+	if rate > 0 {
+		rl = ratelimit.New(rate) // per second
+		Log("[Nonce]: Generate nonces starting from %v at a rate of: %v ops/s", nonce, rate)
+	}else{
+		rl = ratelimit.NewUnlimited() //disable
+		Log("[Nonce]: Generate nonces starting from %v at maximum rate", nonce)
 	}
-
-	rl := ratelimit.New(rate) // per second
-	Log("[Nonce]: Generate nonces starting from %v at a rate of: %v ops/s", nonce, rate)
 
 	if duration > 0 {
 		lastTimelinePrint := int64(-1)
@@ -240,6 +248,7 @@ func deploy(pk *ecdsa.PrivateKey, c *ethclient.Client, gasPrice *big.Int, nonces
 		}
 		LogDebug("Transaction address: %v\n", address.Hex())
 	}
+
 	Log("Thread %v FINISHED - deploy contract transactions issued : %v", threadid, totalTransactions)
 
 }
@@ -255,7 +264,7 @@ func workloadDeploy() {
 
 	conn, err := ethclient.Dial(url)
 	if err != nil {
-		LogFatal("Failed to connect to ethereum node", err)
+		LogFatal("Failed to connect to ethereum node: %v", err)
 	}
 
 	// 2. Load credentials
@@ -301,7 +310,7 @@ func workloadDeploy() {
 ***********************************************************************************************************************/
 func kvstore(pk *ecdsa.PrivateKey, instance *contracts.KVstore, gasPrice *big.Int, nonces <-chan uint64, wg *sync.WaitGroup, threadid int) {
 	defer wg.Done()
-	totalTransactions := 0
+	//totalTransactions := 0
 	Log("Thread %v STARTED - issuing update transactions", threadid)
 
 	for nonce := range nonces {
@@ -312,7 +321,7 @@ func kvstore(pk *ecdsa.PrivateKey, instance *contracts.KVstore, gasPrice *big.In
 		auth.GasPrice = gasPrice
 
 		if nonce%uint64(checkpoint) == 0 {
-			Log("Thread %v - update transactions issued : %v", threadid, totalTransactions)
+			Log("Thread %v - update transactions issued : %v", threadid, atomic.LoadInt64(&totalRequests))
 			instance.PrintTotalInserts(auth)
 			continue // get another nonce
 		}
@@ -323,13 +332,9 @@ func kvstore(pk *ecdsa.PrivateKey, instance *contracts.KVstore, gasPrice *big.In
 			LogFatal("Failed to call update transaction method of kvstore contract. Check the gaslimit for this transaction:", auth.GasLimit, " err:", err)
 		}
 		requestNanotimeMap.Store(id, tIni_us) //stores the timestamp in which the request was made (this will be updated by the event function)
-
-		totalTransactions++
+		atomic.AddInt64(&totalRequests,1)
 		LogDebug("nonce %v, tx sent: %s", nonce, tx.Hash().Hex())
-
 	}
-	Log("Thread %v FINISHED - update transactions issued : %v", threadid, totalTransactions)
-
 }
 
 func workloadKVStore() {
@@ -338,12 +343,12 @@ func workloadKVStore() {
 
 	// 1. Initialize a connection
 	url := "ws://" + host + ":" + port
-	Log("Running transfer workload")
+	Log("Running YCSB workload")
 	Log("Connecting to ethereum network: %v", url)
 
 	client, err := ethclient.Dial(url)
 	if err != nil {
-		LogFatal("Failed to connect to ethereum node", err)
+		LogFatal("Failed to connect to ethereum node: %v", err)
 	}
 
 	// 2. Load credentials
@@ -352,7 +357,7 @@ func workloadKVStore() {
 	// ECDSA (elyptic curve DSA is the standard used by ethereum)
 	privateKey, err := crypto.HexToECDSA(key)
 	if err != nil {
-		LogFatal("Error converting the private key from Hex to ECDSA", err)
+		LogFatal("Error converting the private key from Hex to ECDSA: %v", err)
 	}
 
 	publicKey := privateKey.Public()
@@ -367,12 +372,12 @@ func workloadKVStore() {
 	//3. configure nonce (prevent replay attacks with a user specific nonce)
 	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
-		LogFatal("Impossible to get a nonce for account", err)
+		LogFatal("Impossible to get a nonce for account: %v", err)
 	}
 	//4. configure gasPrice
 	gasPrice, err := client.SuggestGasPrice(context.Background())
 	if err != nil {
-		LogFatal("Unable to get a gas price", err)
+		LogFatal("Unable to get a gas price: %v", err)
 	}
 
 	// deploy a new contract
@@ -384,7 +389,7 @@ func workloadKVStore() {
 	auth.GasPrice = gasPrice
 	contractAddr, _, instance, err := contracts.DeployKVstore(auth, client)
 	if err != nil {
-		LogFatal("Impossible to initialize a bank contract for this workload. ", err)
+		LogFatal("Impossible to initialize a bank contract for this workload: %v", err)
 	}
 	Log("Wait for the 5 seconds (blocks) while contract is be mined before issuing operations.")
 	time.Sleep(5 * time.Second)
@@ -410,15 +415,24 @@ func workloadKVStore() {
 	time.Sleep(10 * time.Second)
 	lastnonce, err := client.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
-		LogFatal("Impossible to get a nonce for final report", err)
+		LogFatal("Impossible to get a nonce for final report: %v", err)
 	}
 	auth.Nonce = big.NewInt(int64(lastnonce))
 	instance.PrintTotalInserts(auth)
 	Log("Wait 10 seconds to receive the final log")
 	time.Sleep(10 * time.Second)
 	close(doneWatchingLogs)
+	Log(stats.ReportStats())
+	unconfirmed := int64(0)
+	requestNanotimeMap.Range(func(key, value interface{}) bool {
+		unconfirmed++
+		return true
+	})
+	Log("Transactions issued : %v, unconfirmed: %v", atomic.LoadInt64(&totalRequests), unconfirmed)
+
 	//wait for logs to be closed
 	time.Sleep(10 * time.Second)
+	stats.PrintStatsMap()
 
 }
 
@@ -427,7 +441,7 @@ func workloadKVStore() {
 ***********************************************************************************************************************/
 func mixed(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.KVstore, gasPrice *big.Int, nonces <-chan uint64, wg *sync.WaitGroup, threadid int) {
 	defer wg.Done()
-	totalTransactions := 0
+
 	Log("Thread %v STARTED - issuing mix deploy/kvstore transactions", threadid)
 
 	for nonce := range nonces {
@@ -438,33 +452,30 @@ func mixed(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.KVstor
 		auth.GasPrice = gasPrice
 
 		if nonce%uint64(checkpoint) == 0 {
-			Log("Thread %v - deploy/kvstore transactions issued: %v", threadid, totalTransactions)
+			Log("Thread %v - deploy/kvstore transactions issued: %v", threadid, atomic.LoadInt64(&totalRequests))
 			instance.PrintTotalInserts(auth)
-			totalTransactions++
 			continue // get another nonce
 		}
 
 		if nonce%2 == 0 {
 			address, _, _, err := contracts.DeployKVstore(auth, c)
 			if err != nil {
-				LogFatal("Error deploying kvstore storage", err)
+				LogFatal("Error deploying kvstore storage: %v", err)
 			}
-			LogDebug("Transaction address: %v\n", address.Hex())
+			LogDebug("Transaction address: %v", address.Hex())
 		} else {
 			id := fmt.Sprintf("%v_tx_%v", client_id, nonce)
 			tIni_us := time.Now().UnixNano() / latency_factor // get the timestamp in microsseconds
 			tx, err := instance.Set(auth, randStringBytes(dbkeysize), randStringBytes(dbvaluesize), id)
 			if err != nil {
-				LogFatal("Failed to call transaction method: ", err)
+				LogFatal("Failed to call transaction method: %v", err)
 			}
 			requestNanotimeMap.Store(id, tIni_us) //stores the timestamp in which the request was made (this will be updated by the event function)
-			LogDebug("nonce %v, tx sent: %s\n", nonce, tx.Hash().Hex())
+			LogDebug("nonce %v, tx sent: %s", nonce, tx.Hash().Hex())
 		}
-		totalTransactions++
+		atomic.StoreInt64(&totalRequests,1)
 
 	}
-	Log("Thread %v FINISHED - mix deploy/kvstore transactions issued : %v", threadid, totalTransactions)
-
 }
 
 func workloadMixed() {
@@ -478,7 +489,7 @@ func workloadMixed() {
 
 	client, err := ethclient.Dial(url)
 	if err != nil {
-		LogFatal("Failed to connect to ethereum node", err)
+		LogFatal("Failed to connect to ethereum node: %v", err)
 	}
 
 	// 2. Load credentials
@@ -487,7 +498,7 @@ func workloadMixed() {
 	// ECDSA (elyptic curve DSA is the standard used by ethereum)
 	privateKey, err := crypto.HexToECDSA(key)
 	if err != nil {
-		LogFatal("Error converting the private key from Hex to ECDSA", err)
+		LogFatal("Error converting the private key from Hex to ECDSA: %v", err)
 	}
 
 	publicKey := privateKey.Public()
@@ -501,12 +512,12 @@ func workloadMixed() {
 	//3. configure nonce (prevent replay attacks with a user specific nonce)
 	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
-		LogFatal("Impossible to get a nonce for account", err)
+		LogFatal("Impossible to get a nonce for account: %v", err)
 	}
 	//4. configure gasPrice
 	gasPrice, err := client.SuggestGasPrice(context.Background())
 	if err != nil {
-		LogFatal("Unable to get a gas price", err)
+		LogFatal("Unable to get a gas price: %v", err)
 	}
 
 	// deploy a new contract
@@ -518,7 +529,7 @@ func workloadMixed() {
 	auth.GasPrice = gasPrice
 	contractAddr, _, instance, err := contracts.DeployKVstore(auth, client)
 	if err != nil {
-		LogFatal("Impossible to initialize a kvstore contract for this workload.", err)
+		LogFatal("Impossible to initialize a kvstore contract for this workload: %v", err)
 	}
 	Log("Wait for the 5 seconds (blocks) while contract is be mined before issuing operations.")
 	time.Sleep(5 * time.Second)
@@ -544,13 +555,21 @@ func workloadMixed() {
 	time.Sleep(10 * time.Second)
 	lastnonce, err := client.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
-		LogFatal("Impossible to get a nonce for final report", err)
+		LogFatal("Impossible to get a nonce for final report: %v", err)
 	}
 	auth.Nonce = big.NewInt(int64(lastnonce))
 	instance.PrintTotalInserts(auth)
 	Log("Wait 10 seconds to receive the final log")
 	time.Sleep(10 * time.Second)
 	close(doneWatchingLogs)
+	Log(stats.ReportStats())
+	unconfirmed := int64(0)
+	requestNanotimeMap.Range(func(key, value interface{}) bool {
+		unconfirmed++
+		return true
+	})
+	Log("Transactions issued : %v, unconfirmed: %v", atomic.LoadInt64(&totalRequests), unconfirmed)
+
 	//wait for logs to be closed
 	time.Sleep(10 * time.Second)
 }

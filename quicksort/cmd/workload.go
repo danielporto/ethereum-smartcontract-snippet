@@ -22,6 +22,7 @@ import (
 	"math/big"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/danielporto/ethereum-smartcontract-snippet/quicksort/contracts"
@@ -39,6 +40,7 @@ var count int
 var maxrate int // using for suggesting a workload value in tps
 var checkpoint int
 var timeline bool
+var totalRequests int64
 
 var requestNanotimeMap sync.Map
 var stats StatsStorage
@@ -77,11 +79,14 @@ func init() {
 	workloadCmd.PersistentFlags().StringVarP(&operation, "operation", "o", "sort", "Issues operations of that type (deploy/sort/mixed) to the blockchain")
 	workloadCmd.PersistentFlags().IntVarP(&count, "count", "c", 1, "Number of operations to be issued")
 	workloadCmd.PersistentFlags().IntVarP(&duration, "duration", "d", 0, "Duration of the experiment in seconds")
-	workloadCmd.PersistentFlags().IntVarP(&threads, "threads", "t", 1, "Number of threads")
-	workloadCmd.PersistentFlags().IntVarP(&maxrate, "rate", "r", 100, "Max operations per second for each thread (suggested value)")
+	// this is currently not supporting multi threads. for that we need multiple keys to generate
+	// nonces independently per key otherwise the will queue up after a max rate.
+	// instead, start multiple processes passing a different key
+	//	workloadCmd.PersistentFlags().IntVarP(&threads, "threads", "t", 1, "Number of threads")
+	threads=1
+	workloadCmd.PersistentFlags().IntVarP(&maxrate, "rate", "r", 10, "Max operations per second for each thread (suggested value)")
 	workloadCmd.PersistentFlags().IntVarP(&checkpoint, "checkpoint", "q", 5000, "Print total operations after X operations issued.")
 	workloadCmd.PersistentFlags().StringVarP(&client_id, "id", "", "undefined", "client identifier")
-
 	workloadCmd.PersistentFlags().BoolVarP(&timeline, "timeline", "", false, "print a timeline every second")
 }
 
@@ -114,12 +119,14 @@ func generateNonceAtRate(client *ethclient.Client, fromAddress common.Address, c
 		LogFatal("Impossible to get a nonce for account: %v", err)
 	}
 
-	if rate <= 0 {
-		LogFatal("Rate must be greater than 0")
+	var rl ratelimit.Limiter
+	if rate > 0 {
+		rl = ratelimit.New(rate) // per second
+		Log("[Nonce]: Generate nonces starting from %v at a rate of: %v ops/s", nonce, rate)
+	}else{
+		rl = ratelimit.NewUnlimited() //disable
+		Log("[Nonce]: Generate nonces starting from %v at maximum rate", nonce)
 	}
-
-	rl := ratelimit.New(rate) // per second
-	Log("[Nonce]: Generate nonces starting from %v at a rate of: %v ops/s", nonce, rate)
 
 	if duration > 0 {
 		lastTimelinePrint := int64(-1)
@@ -279,7 +286,7 @@ func workloadDeploy() {
 ***********************************************************************************************************************/
 func quicksort(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.QuickSort, gasPrice *big.Int, nonces <-chan uint64, wg *sync.WaitGroup, threadid int) {
 	defer wg.Done()
-	total_transactions := 0
+	//total_transactions := 0
 	Log("Thread %v STARTED - issuing quicksort transactions", threadid)
 
 	var sort func(opts *bind.TransactOpts, size *big.Int, id string) (*types.Transaction, error)
@@ -299,7 +306,7 @@ func quicksort(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.Qu
 		auth.GasPrice = gasPrice
 
 		if nonce%uint64(checkpoint) == 0 {
-			Log("Thread %v - quicksort transactions issued : %v", threadid, total_transactions)
+			Log("Thread %v - quicksort transactions issued : %v", threadid, atomic.LoadInt64(&totalRequests))
 			instance.PrintAllData(auth)
 			continue // get another nonce
 		}
@@ -312,11 +319,10 @@ func quicksort(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.Qu
 		}
 		requestNanotimeMap.Store(id, tIni_us) //stores the timestamp in which the request was made (this will be updated by the event function)
 
-		total_transactions++
+		atomic.AddInt64(&totalRequests,1)
 		LogDebug("nonce %v, tx sent: %s", nonce, tx.Hash().Hex())
 
 	}
-	Log("Thread %v FINISHED - quicksort transactions issued : %v", threadid, total_transactions)
 }
 
 func workloadQuicksort() {
@@ -404,11 +410,18 @@ func workloadQuicksort() {
 	Log("Wait 10 seconds to receive the final log")
 	time.Sleep(10 * time.Second)
 	close(doneWatchingLogs)
+	Log(stats.ReportStats())
+	unconfirmed := int64(0)
+	requestNanotimeMap.Range(func(key, value interface{}) bool {
+		unconfirmed++
+		return true
+	})
+	Log("Transactions issued : %v, unconfirmed: %v", atomic.LoadInt64(&totalRequests), unconfirmed)
 
 	//wait for logs to be closed
 	time.Sleep(10 * time.Second)
 	stats.PrintStatsMap()
-	Log(stats.ReportStats())
+
 }
 
 /**********************************************************************************************************************
@@ -416,7 +429,7 @@ func workloadQuicksort() {
 ***********************************************************************************************************************/
 func mixed(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.QuickSort, gasPrice *big.Int, nonces <-chan uint64, wg *sync.WaitGroup, threadid int) {
 	defer wg.Done()
-	total_transactions := 0
+
 	Log("Thread %v STARTED - issuing mix deploy/quicksort transactions", threadid)
 
 	var sort func(opts *bind.TransactOpts, size *big.Int, id string) (*types.Transaction, error)
@@ -435,9 +448,8 @@ func mixed(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.QuickS
 		auth.GasPrice = gasPrice
 
 		if nonce%uint64(checkpoint) == 0 {
-			Log("Thread %v - mix deploy/quicksort transactions issued: %v", threadid, total_transactions)
+			Log("Thread %v - mix deploy/quicksort transactions issued: %v", threadid, atomic.LoadInt64(&totalRequests))
 			instance.PrintAllData(auth)
-			total_transactions++
 			continue // get another nonce
 		}
 
@@ -455,11 +467,9 @@ func mixed(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.QuickS
 			}
 			LogDebug("nonce %v, tx sent: %s", nonce, tx.Hash().Hex())
 		}
-		total_transactions++
+		atomic.StoreInt64(&totalRequests, 1)
 
 	}
-	Log("Thread %v FINISHED - mix quicksort/deploy transactions issued : %v", threadid, total_transactions)
-
 }
 
 func workloadMixed() {

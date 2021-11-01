@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 
-pragma solidity >=0.7.0 <0.8.8;
+pragma solidity >=0.7.0 <0.8.10;
 
 /**
 * @title Counter
@@ -11,28 +11,28 @@ pragma solidity >=0.7.0 <0.8.8;
 
 contract Counter {
     uint counter = 0;
-    event Increment(uint);
-    event Decrement(uint);
-    event GetValue(uint);
+    event PrintConfirmation(string, uint); //helps identifying the original request
+    event PrintValue(uint);
 
-    function getCounter() public {
-        emit GetValue(counter);
+
+    function getCounter() public returns(uint) {
+        emit PrintValue(counter);
+        return counter;
     }
 
-    function increment(uint value) public {
+    function increment(uint value, string calldata id) public {
         counter +=value;
-        emit Increment(counter);
+        emit PrintConfirmation(id, counter);
     }
 
-    function decrement(uint value) public {
+    function decrement(uint value, string calldata id) public {
         counter -=value;
-        emit Decrement(counter);
+        emit PrintConfirmation(id, counter);
     }
 
-    function set(uint value) public {
+    function set(uint value, string calldata id) public {
         counter = value;
+        emit PrintConfirmation(id, counter);
     }
-
-
 
 }

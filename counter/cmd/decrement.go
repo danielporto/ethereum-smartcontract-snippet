@@ -19,14 +19,12 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"fmt"
-	"github.com/ethereum/go-ethereum/core/types"
-
-	log "github.com/sirupsen/logrus"
 	"math/big"
 
 	"github.com/danielporto/ethereum-smartcontract-snippet/counter/contracts"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
@@ -65,25 +63,25 @@ func init() {
 func Decrement(key, host, port string) *types.Transaction {
 
 	// 1. Initialize a connection
-	url := "http://" + host + ":" + port
+	url := "ws://" + host + ":" + port
 	client, err := ethclient.Dial(url)
 	if err != nil {
-		log.Fatal(err)
+		LogFatal("Error opening websocket connection to host. %v, %v", url, err)
 	}
 
 	// 2. Load credentials
 	// get credentials to write
 	// from ganache the private key is in the key icon of any account/wallet
-	// ECDSA (elyptic curve DSA is the standard used by ethereum)
+	// ECDSA (elliptic curve DSA is the standard used by ethereum)
 	privateKey, err := crypto.HexToECDSA(key)
 	if err != nil {
-		log.Fatal("Error converting the private key", err)
+		LogFatal("Error converting the private key: %v", err)
 	}
 
 	publicKey := privateKey.Public()
 	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
 	if !ok {
-		log.Fatal("Cannot assert type: public key is not the type *ecdsa.PublicKey")
+		LogFatal("Cannot assert type: public key is not the type *ecdsa.PublicKey")
 	}
 	//now get the account of that private key
 	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
@@ -91,12 +89,12 @@ func Decrement(key, host, port string) *types.Transaction {
 	//3. configure nonce (prevent replay attacks with a user specific nonce)
 	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
-		log.Fatal("Impossible to get a nonce for acccount", err)
+		LogFatal("Impossible to get a nonce for account: %v", err)
 	}
 	//4. configure gasPrice
 	gasPrice, err := client.SuggestGasPrice(context.Background())
 	if err != nil {
-		log.Fatal("Unable to get a gas price", err)
+		LogFatal("Unable to get a gas price: %v", err)
 	}
 
 	// 4. setup an authenticated transactor with info from credentials and connection configuration
@@ -111,18 +109,19 @@ func Decrement(key, host, port string) *types.Transaction {
 	address := common.HexToAddress(contract)
 	instance, err := contracts.NewCounter(address, client)
 	if err != nil {
-		log.Fatal(err)
+		LogFatal("Impossible to initialize a counter for this workload: %v", err)
 	}
 
-	tx, err := instance.Decrement(auth, big.NewInt(int64(amount)))
+	id := fmt.Sprintf("%v_tx_%v", client_id, nonce)
+	tx, err := instance.Decrement(auth, big.NewInt(int64(amount)), id)
 	if err != nil {
-		log.Fatal("Failed to call transaction method", err)
+		LogFatal("Failed to call transaction method: %v", err)
 	}
 	// check receipt
 	// if !checkReceipt(client, tx, 3) {
-	// 	log.Fatal("Error: impossible to verify the transaction", tx)
+	// 	LogFatal("Error: impossible to verify the transaction", tx)
 	// }
-	fmt.Printf("nonce %v, tx sent: %s\n", nonce, tx.Hash().Hex())
+	Log("nonce %v, tx sent: %s", nonce, tx.Hash().Hex())
 	return tx
 
 }

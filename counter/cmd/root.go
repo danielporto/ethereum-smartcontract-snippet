@@ -18,8 +18,8 @@ package cmd
 import (
 	"fmt"
 	"os"
-
-	log "github.com/sirupsen/logrus"
+	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -40,6 +40,48 @@ var duration int      //used for duration of experiment
 var contract string   // used for increment, decrement and print
 var threads int       // used for workload
 var verbosity string  //set log verbosity
+var client_id string  // client identifier to match transaction response
+var debug bool
+
+var latency_factor_unity string
+var latency_factor int64
+
+func Log(message string, a ...interface{}) {
+	var m string
+	m = fmt.Sprintf(message, a...)
+
+	now := time.Now()
+	location, _ := time.LoadLocation("Europe/Lisbon")
+	now_ts_ms := now.UnixNano() / 1_000_000
+	now_date := now.In(location).Format("2006-01-02 15:04:05")
+	fmt.Printf("%v|%v [CounterClient]: %v\n", now_date, now_ts_ms, m)
+}
+
+func LogWtag(tag, message string, a ...interface{}) {
+	var m string
+	m = fmt.Sprintf(message, a...)
+
+	now := time.Now()
+	location, _ := time.LoadLocation("Europe/Lisbon")
+	now_ts_ms := now.UnixNano() / 1_000_000
+	now_date := now.In(location).Format("2006-01-02 15:04:05")
+	fmt.Printf("%v|%v [CounterClient]: %v - %v\n", now_date, now_ts_ms, tag, m)
+}
+
+func LogFatal(message string, a ...interface{}) {
+	LogWtag("Fatal Error", message, a...)
+	os.Exit(-1)
+}
+func LogError(message string, a ...interface{}) {
+	LogWtag("Error", message, a...)
+}
+
+func LogDebug(message string, a ...interface{}) {
+	if !debug {
+		return
+	}
+	LogWtag("Debug", message, a...)
+}
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -51,12 +93,19 @@ For example:
 counter workload -o increment -c 10 --host "192.168.10.166" --port 23000 \
    			   --key "1be3b50b31734be48452c29d714941ba165ef0cbf3ccea8ca16c45e3d8d45fb0"`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		lvl, err := log.ParseLevel(verbosity)
-		if err != nil {
-			log.Fatal("Invalid log level", err)
+		if strings.TrimSpace(strings.ToUpper(verbosity)) == "DEBUG" {
+			debug = true
+			LogDebug("Debug mode enabled")
+
 		}
-		log.SetLevel(lvl)
-		log.Debugf("Debug mode enabled")
+		switch latency_factor_unity {
+		case "microseconds":
+			latency_factor = 1_000
+			Log("Latency for request/reply are computed in  microseconds ")
+		case "milliseconds":
+			latency_factor = 1_000_000
+			Log("Latency for request/reply are computed in  milliseconds ")
+		}
 	},
 }
 
@@ -79,16 +128,19 @@ func init() {
 	// when this action is called directly.
 	//rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
-	rootCmd.PersistentFlags().StringVarP(&key, "key", "k", "", "key of a network node")
-	rootCmd.MarkPersistentFlagRequired("key")
 	rootCmd.PersistentFlags().StringVarP(&host, "host", "a", "", "hostname or ip address")
 	rootCmd.MarkPersistentFlagRequired("host")
 	rootCmd.PersistentFlags().StringVarP(&port, "port", "p", "", "url of the server to connect to")
 	rootCmd.MarkPersistentFlagRequired("port")
+
 	rootCmd.PersistentFlags().StringVarP(&verbosity, "verbosity", "v", "info", "Log level (trace, debug, info, warn, error, fatal, panic")
 	rootCmd.PersistentFlags().Int32VarP(&trxgaslimit, "gaslimit", "g", 3000000, "Gas limit for the transaction")
-	rootCmd.PersistentFlags().IntVarP(&amount, "amount", "s", 1, "Amount to increase the counter")
 	rootCmd.PersistentFlags().BoolVarP(&disable_events, "events", "e", false, "url of the server to connect to")
+	rootCmd.PersistentFlags().StringVarP(&key, "key", "k", "", "key of a network node")
+	rootCmd.MarkPersistentFlagRequired("key")
+	rootCmd.PersistentFlags().StringVarP(&latency_factor_unity, "req_latency_unity", "", "microseconds", "latency between the request and reply: microseconds/milliseconds")
+	rootCmd.PersistentFlags().IntVarP(&amount, "amount", "s", 1, "Amount to increase the counter")
+
 
 }
 

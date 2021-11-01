@@ -24,6 +24,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -42,6 +43,8 @@ var count int
 var maxrate int // using for suggesting a workload value in tps
 var checkpoint int
 var timeline bool
+var totalRequests int64
+
 
 var requestTimeMap sync.Map
 var stats StatsStorage
@@ -112,7 +115,11 @@ func init() {
 	workloadCmd.PersistentFlags().StringVarP(&operation, "operation", "", "transfer", "Issues operations of that type (deploy/transfer/mixed) to the blockchain")
 	workloadCmd.PersistentFlags().IntVarP(&count, "count", "", 1, "Number of operations to be issued")
 	workloadCmd.PersistentFlags().IntVarP(&duration, "duration", "", 0, "Duration of the experiment in seconds")
-	workloadCmd.PersistentFlags().IntVarP(&threads, "threads", "", 1, "Number of threads")
+	// this is currently not supporting multi threads. for that we need multiple keys to generate
+	// nonces independently per key otherwise the will queue up after a max rate.
+	// instead, start multiple processes passing a different key
+	//	workloadCmd.PersistentFlags().IntVarP(&threads, "threads", "t", 1, "Number of threads")
+	threads=1
 	workloadCmd.PersistentFlags().IntVarP(&maxrate, "rate", "", 10, "Max operations per second for each thread (suggested value)")
 	workloadCmd.PersistentFlags().IntVarP(&checkpoint, "checkpoint", "", 5000, "Print total operations after X operations issued.")
 	workloadCmd.PersistentFlags().StringVarP(&keys_str, "keys", "", "", "list of keys of a account wallets")
@@ -156,12 +163,14 @@ func generateNonceAtRate(client *ethclient.Client, fromAddress common.Address, c
 		LogFatal("Impossible to get a nonce for account: %v", err)
 	}
 
-	if rate <= 0 {
-		LogFatal("Rate must be greater than 0")
+	var rl ratelimit.Limiter
+	if rate > 0 {
+		rl = ratelimit.New(rate) // per second
+		Log("[Nonce]: Generate nonces starting from %v at a rate of: %v ops/s", nonce, rate)
+	}else{
+		rl = ratelimit.NewUnlimited() //disable
+		Log("[Nonce]: Generate nonces starting from %v at maximum rate", nonce)
 	}
-
-	rl := ratelimit.New(rate) // per second
-	Log("[Nonce]: Generate nonces starting from %v at a rate of: %v ops/s", nonce, rate)
 
 	if duration > 0 {
 		lastTimelinePrint := int64(-1)
@@ -447,7 +456,7 @@ func workloadContractTransfer() {
 ***********************************************************************************************************************/
 func directTransfer(pk *ecdsa.PrivateKey, instance *contracts.Bank, gasPrice *big.Int, nonces <-chan uint64, wg *sync.WaitGroup, threadid int) {
 	defer wg.Done()
-	total_transactions := 0
+	//total_transactions := 0
 	Log("Thread %v STARTED - issuing transfer transactions", threadid)
 
 	for nonce := range nonces {
@@ -458,7 +467,7 @@ func directTransfer(pk *ecdsa.PrivateKey, instance *contracts.Bank, gasPrice *bi
 		auth.GasPrice = gasPrice
 
 		if nonce%uint64(checkpoint) == 0 {
-			Log("Thread %v - transfer transactions issued : %v", threadid, total_transactions)
+			Log("Thread %v - transfer transactions issued : %v", threadid, atomic.LoadInt64(&totalRequests))
 			instance.LogTransferOperations(auth)
 			continue // get another nonce
 		}
@@ -472,11 +481,11 @@ func directTransfer(pk *ecdsa.PrivateKey, instance *contracts.Bank, gasPrice *bi
 		}
 		requestTimeMap.Store(id, tIni_us) //stores the timestamp in which the request was made (this will be updated by the event function)
 
-		total_transactions++
+		atomic.AddInt64(&totalRequests,1)
 		LogDebug("nonce %v, tx sent: %s", nonce, tx.Hash().Hex())
 
 	}
-	Log("Thread %v FINISHED - transfer transactions issued : %v", threadid, total_transactions)
+	Log("Thread %v FINISHED - transfer transactions issued : %v", threadid, atomic.LoadInt64(&totalRequests))
 }
 
 func workloadDirectTransfer() {
@@ -564,10 +573,18 @@ func workloadDirectTransfer() {
 	Log("Wait 10 seconds to receive the final log")
 	time.Sleep(10 * time.Second)
 	close(doneWatchingLogs)
+	Log(stats.ReportStats())
+	unconfirmed := int64(0)
+	requestTimeMap.Range(func(key, value interface{}) bool {
+		unconfirmed++
+		return true
+	})
+	Log("Transactions issued : %v, unconfirmed: %v", atomic.LoadInt64(&totalRequests), unconfirmed)
+
 	//wait for logs to be closed
 	time.Sleep(10 * time.Second)
 	stats.PrintStatsMap()
-	Log(stats.ReportStats())
+
 }
 
 /**********************************************************************************************************************
@@ -575,7 +592,7 @@ func workloadDirectTransfer() {
 ***********************************************************************************************************************/
 func mixed(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.Bank, gasPrice *big.Int, nonces <-chan uint64, wg *sync.WaitGroup, threadid int) {
 	defer wg.Done()
-	total_transactions := 0
+
 	Log("Thread %v STARTED - issuing mix deploy/transfer transactions", threadid)
 
 	for nonce := range nonces {
@@ -586,9 +603,8 @@ func mixed(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.Bank, 
 		auth.GasPrice = gasPrice
 
 		if nonce%uint64(checkpoint) == 0 {
-			Log("Thread %v - deploy/transfer transactions issued: %v", threadid, total_transactions)
+			Log("Thread %v - deploy/transfer transactions issued: %v", threadid, atomic.LoadInt64(&totalRequests))
 			instance.LogTransferOperations(auth)
-			total_transactions++
 			continue // get another nonce
 		}
 
@@ -606,10 +622,10 @@ func mixed(pk *ecdsa.PrivateKey, c *ethclient.Client, instance *contracts.Bank, 
 			}
 			LogDebug("nonce %v, tx sent: %s", nonce, tx.Hash().Hex())
 		}
-		total_transactions++
+		atomic.AddInt64(&totalRequests, 1)
 
 	}
-	Log("Thread %v FINISHED - mix deploy/transfer transactions issued : %v", threadid, total_transactions)
+	Log("Thread %v FINISHED - mix deploy/transfer transactions issued : %v", threadid, atomic.LoadInt64(&totalRequests))
 
 }
 
